@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>对唱和声练习器 · 四类法</title>
+<meta name="theme-color" content="#1f3a5f">
+<title>和声对唱练习</title>
 <style>
 :root { --bg:#f4f6f9; --card:#fff; --ink:#1d2433; --muted:#6b7280; --line:#e3e7ee; --blue:#3b6fd8; --orange:#e08a2b; --green:#2e9e4f; --red:#d43d3d; --yellow:#d9a400; --head:#1f3a5f; }
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -49,6 +50,7 @@ section.hidden, .hidden { display:none !important; }
 .pbtn.stop { flex:0 0 64px; background:#333; color:#fff; border-color:#333; }
 .rollwrap { width:100%; height:240px; background:#fff; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
 #rollCanvas { width:100%; height:240px; display:block; }
+@media (min-width:700px) { .rollwrap, #rollCanvas { height:320px; } }
 .sour { font-size:13px; margin:8px 0; }
 .tag { display:inline-block; padding:0 6px; border-radius:4px; color:#fff; font-size:12px; }
 .tag.sour { background:var(--red); } .tag.mild { background:var(--yellow); }
@@ -70,6 +72,7 @@ select.wide { width:100%; font-size:15px; padding:8px; border-radius:8px; border
 .ctlrow button.primary { background:var(--head); color:#fff; border-color:var(--head); font-weight:600; }
 .live { font-weight:700; padding:6px 10px; border-radius:8px; background:#eee; margin:6px 0; display:inline-block; min-width:140px; }
 .live.hit { background:#d8f3df; color:#1f6f35; } .live.pulled { background:#f9d6d6; color:#a12727; } .live.off { background:#eee; color:#444; } .live.silent { background:#fff2c2; color:#6b5200; } .live.extra { background:#fde3c8; color:#7a3f00; }
+.lvl { flex:1; height:10px; background:#eee; border-radius:5px; overflow:hidden; } .lvl div { height:100%; width:0; background:#2e9e4f; transition:width .06s; }
 .meter { position:relative; height:10px; background:linear-gradient(90deg,#f9d6d6,#d8f3df 42%,#d8f3df 58%,#f9d6d6); border-radius:5px; margin:6px 0 10px; }
 .meter .mid { position:absolute; left:50%; top:-3px; width:2px; height:16px; background:#333; }
 #centsBar { position:absolute; top:-4px; width:6px; height:18px; margin-left:-3px; background:var(--blue); border-radius:3px; left:50%; transition:left .08s; }
@@ -99,7 +102,7 @@ textarea { width:100%; min-height:200px; font-size:13px; border:1px solid var(--
 </head>
 <body>
 <header>
-  <div class="title">对唱和声练习器 <span>四类法 · 单人练习 · 合成器示例</span></div>
+  <div class="title">和声对唱练习 <span>四类法 · 单人练习 · 合成器示例</span></div>
   <div class="transport">
     <select id="songSel"></select>
     <div class="ctl">调 <button id="keyMinus">−</button><span id="keyVal">C</span><button id="keyPlus">+</button></div>
@@ -141,6 +144,11 @@ textarea { width:100%; min-height:200px; font-size:13px; border:1px solid var(--
         <button id="pracStop">■ 停</button>
       </div>
       <div class="row"><span class="live" id="liveStatus">戴上耳机，开麦克风，然后开始</span><span class="pbest" id="pracBest"></span></div>
+      <div id="micPanel" class="hidden">
+        <div class="row"><label style="min-width:84px">麦克风电平</label><div class="lvl"><div id="micLevel"></div></div></div>
+        <div class="row"><label style="min-width:84px">灵敏度</label><input type="range" id="micGain" min="1" max="12" step="1"><span class="v" id="micGainV"></span></div>
+        <div class="note" id="micNote">没有信号：对着麦克风唱一个长音</div>
+      </div>
       <div class="meter"><div class="mid"></div><div id="centsBar"></div></div>
       <div class="rollwrap" id="rollPrac"></div>
       <div class="legend"><span class="lg mel"></span>主旋律 <span class="lg har"></span>目标（和声）· 绿点命中 · 红点被带跑 · 灰点跑调</div>
@@ -1015,11 +1023,13 @@ const Roll = {
   init(canvas) { this.canvas = canvas; this.ctx2d = canvas.getContext('2d'); this.resize(); window.addEventListener('resize', () => this.resize()); },
   resize() {
     if (!this.canvas) return;
-    const r = this.canvas.getBoundingClientRect(); this.dpr = window.devicePixelRatio || 1;
-    this.W = Math.max(200, r.width); this.H = this.canvas.height / this.dpr || 240;
-    this.canvas.width = this.W * this.dpr; this.canvas.height = this.H * this.dpr;
+    const r = this.canvas.getBoundingClientRect();
+    if (r.width < 10 || r.height < 10) return; // 未显示时不处理
+    this.dpr = window.devicePixelRatio || 1;
+    this.W = r.width; this.H = r.height;
+    this.canvas.width = Math.round(this.W * this.dpr); this.canvas.height = Math.round(this.H * this.dpr);
     this.ctx2d.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-    this.pxPerBeat = this.W < 480 ? 40 : 52;
+    this.pxPerBeat = this.W < 480 ? 40 : 56;
     this.draw(this.lastBeat || 0);
   },
   setData(song, mel, har) {
@@ -1034,8 +1044,9 @@ const Roll = {
     const c = this.ctx2d; if (!c || !this.song) return;
     this.lastBeat = beat;
     const W = this.W, H = this.H, pb = this.pxPerBeat;
-    const viewStart = Math.max(0, beat - W * 0.3 / pb);
-    const xOf = b => (b - viewStart) * pb;
+    const G = 16; // 左侧音级标签留白
+    const viewStart = Math.max(0, beat - (W - G) * 0.3 / pb);
+    const xOf = b => G + (b - viewStart) * pb;
     c.clearRect(0, 0, W, H);
     c.fillStyle = this.colors.bg; c.fillRect(0, 0, W, H);
     const rh = this.rowH();
@@ -1044,7 +1055,7 @@ const Roll = {
       const y = this.yOf(m); const deg = midiToDeg(m);
       if (!deg) continue;
       c.strokeStyle = deg === 1 ? '#cfd6e0' : this.colors.grid; c.lineWidth = 1; c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
-      c.fillStyle = 'rgba(255,255,255,.85)'; c.fillRect(0, y - 10, 12, 11); c.fillStyle = '#99a'; c.font = '10px system-ui'; c.textAlign = 'left'; c.fillText(String(deg), 2, y - 1);
+      c.fillStyle = '#99a'; c.font = '10px system-ui'; c.textAlign = 'right'; c.fillText(String(deg), G - 3, y + 3);
     }
     // 小节线与和弦名
     const beats = this.song.beats;
@@ -1059,27 +1070,33 @@ const Roll = {
     }
     const drawNote = (n, fill, isHar) => {
       const x0 = xOf(n.t), x1 = xOf(n.t + n.b);
-      if (x1 < -5 || x0 > W + 5) return;
-      const y = this.yOf(n.midi) - rh / 2 - 1, h = Math.max(6, rh - 2);
+      if (x1 < G || x0 > W + 5) return;
+      const yc = this.yOf(n.midi);
+      const h = Math.max(5, rh * 0.47);
+      const y = isHar ? yc + 1 : yc - 1 - h; // 主旋律在行的上半，和声在下半，齐唱时两者都看得见
+      const sx0 = Math.max(G, x0);
       if (isHar && n.segs) {
         for (const s of n.segs) {
-          const sx0 = xOf(s.t), sx1 = xOf(s.t + s.b);
-          c.fillStyle = s.status === 'sour' ? '#f7c6c6' : (s.status === 'mild' ? '#fbe9b5' : fill);
-          c.fillRect(sx0, y, Math.max(2, sx1 - sx0), h);
-          if (s.status !== 'in') { c.strokeStyle = s.status === 'sour' ? this.colors.sour : this.colors.mild; c.lineWidth = 2; c.strokeRect(sx0 + 1, y + 1, Math.max(2, sx1 - sx0) - 2, h - 2); }
+          const a = Math.max(G, xOf(s.t)), b2 = xOf(s.t + s.b);
+          if (b2 < G) continue;
+          c.fillStyle = s.status === 'sour' ? '#f4a3a3' : (s.status === 'mild' ? '#f6dc8a' : fill);
+          c.fillRect(a, y, Math.max(2, b2 - a - 1), h);
+          if (s.status !== 'in') { c.strokeStyle = s.status === 'sour' ? this.colors.sour : this.colors.mild; c.lineWidth = 1.5; c.strokeRect(a + 0.75, y + 0.75, Math.max(2, b2 - a - 1) - 1.5, h - 1.5); }
         }
-      } else { c.fillStyle = fill; c.fillRect(x0, y, Math.max(2, x1 - x0 - 1), h); }
+      } else { c.fillStyle = fill; c.fillRect(sx0, y, Math.max(2, x1 - sx0 - 1), h); }
       const lab = n.label || midiLabel(n.midi);
-      if (x1 - x0 > 12 && h >= 9) { c.fillStyle = isHar ? '#5a3a00' : '#fff'; c.font = '10px system-ui'; c.textAlign = 'left'; c.fillText(lab, x0 + 3, y + h - 2); }
+      if (x1 - sx0 > 14 && h >= 9) { c.fillStyle = isHar ? '#5a3a00' : '#fff'; c.font = '9px system-ui'; c.textAlign = 'left'; c.fillText(lab, sx0 + 3, y + h - 1.5); }
     };
-    for (const n of this.mel) drawNote(n, this.colors.mel, false);
     for (const n of this.har) drawNote(n, '#f3c58a', true);
+    for (const n of this.mel) drawNote(n, this.colors.mel, false);
     // 麦克风轨迹
     for (const p of this.trail) {
       const x = xOf(p.t); if (x < 0 || x > W) continue;
       c.fillStyle = p.status === 'hit' ? '#2e9e4f' : (p.status === 'pulled' ? '#d43d3d' : (p.status === 'off' ? '#999' : '#bbb'));
       c.beginPath(); c.arc(x, this.yOf(p.midi), 2.2, 0, Math.PI * 2); c.fill();
     }
+    c.fillStyle = this.colors.bg; c.fillRect(0, 0, G - 1, H);
+    for (let m = Math.ceil(this.lo); m <= this.hi; m++) { const deg = midiToDeg(m); if (!deg) continue; c.fillStyle = '#99a'; c.font = '10px system-ui'; c.textAlign = 'right'; c.fillText(String(deg), G - 3, this.yOf(m) + 3); }
     // 播放头
     const px = xOf(beat);
     c.strokeStyle = this.colors.play; c.lineWidth = 2; c.beginPath(); c.moveTo(px, 0); c.lineTo(px, H); c.stroke();
@@ -1089,56 +1106,71 @@ const Roll = {
 
 /* ---- practice.js ---- */
 /* ===== 麦克风测音与练习评分 ===== */
+const IS_PHONE = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 2);
 const Mic = {
-  stream: null, analyser: null, buf: null, on: false, src: null,
+  stream: null, analyser: null, buf: null, on: false, src: null, boost: null, level: 0, lastMidi: null, lastF: null, raf: null,
+  gain() { const g = (typeof state !== 'undefined' && state.prac && state.prac.micGain) || (IS_PHONE ? 5 : 2); return g; },
   async start() {
     const ctx = AudioEng.ensure();
     if (this.on) return true;
     try {
+      /* 关闭系统语音处理：回声消除/自动增益会让手机切到“通话”音频路径，伴奏音量突变、检测忽强忽弱 */
       this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }, video: false });
-    } catch (e) { alert('无法打开麦克风：' + (e.message || e) + '\n请在浏览器里允许麦克风权限，并用 https 或本地文件打开。'); return false; }
+    } catch (e) { alert('无法打开麦克风：' + (e.name || e) + '\n请允许麦克风权限；iPhone 上网页必须是 https 链接才能用麦克风。'); return false; }
     this.src = ctx.createMediaStreamSource(this.stream);
-    this.analyser = ctx.createAnalyser(); this.analyser.fftSize = 2048;
-    this.src.connect(this.analyser);
+    this.boost = ctx.createGain(); this.boost.gain.value = this.gain(); // 手机端信号放大（沿用跟唱工具的做法）
+    this.analyser = ctx.createAnalyser(); this.analyser.fftSize = 2048; this.analyser.smoothingTimeConstant = 0;
+    this.src.connect(this.boost); this.boost.connect(this.analyser); // 不连 destination，避免回授
     this.buf = new Float32Array(this.analyser.fftSize);
-    this.on = true; return true;
+    try { await ctx.resume(); } catch (e) { }
+    setTimeout(() => { if (ctx.state !== 'running') ctx.resume().catch(() => { }); }, 300); // iOS 开麦后路由变化易挂起
+    this.on = true; this.monitor(); return true;
   },
+  setGain(g) { if (this.boost) this.boost.gain.value = g; },
   stop() {
     if (this.stream) this.stream.getTracks().forEach(t => t.stop());
     if (this.src) { try { this.src.disconnect(); } catch (e) { } }
-    this.stream = null; this.src = null; this.analyser = null; this.on = false;
+    this.stream = null; this.src = null; this.analyser = null; this.on = false; this.level = 0; this.lastMidi = null;
+    if (this.raf) cancelAnimationFrame(this.raf);
   },
-  /** 返回 midi（浮点）或 null */
+  /** 读一帧：返回 midi（浮点）或 null；同时更新 level/lastMidi */
   read() {
-    if (!this.on) return null;
+    if (!this.on || !this.analyser) return null;
     this.analyser.getFloatTimeDomainData(this.buf);
-    const f = detectPitch(this.buf, AudioEng.ctx.sampleRate);
-    if (!f || f < 60 || f > 1200) return null;
-    return 69 + 12 * Math.log2(f / 440);
+    const r = detectPitch(this.buf, AudioEng.ctx.sampleRate);
+    this.level = r.rms;
+    if (!r.f || r.f < 60 || r.f > 1500) { this.lastMidi = null; return null; }
+    this.lastMidi = 69 + 12 * Math.log2(r.f / 440); this.lastF = r.f;
+    return this.lastMidi;
+  },
+  monitor() { // 不在练习时也持续显示电平和音高，方便确认麦克风有信号
+    if (!this.on) return;
+    if (!(typeof Practice !== 'undefined' && Practice.running)) { this.read(); if (typeof updateMicUI === 'function') updateMicUI(); }
+    this.raf = requestAnimationFrame(() => this.monitor());
   },
 };
+/* 自相关测音（沿用跟唱工具的算法：先过门限，再找第一个谷之后的最大峰，抛物线插值） */
 function detectPitch(buf, sr) {
-  const N = buf.length;
-  let rms = 0; for (let i = 0; i < N; i++) rms += buf[i] * buf[i]; rms = Math.sqrt(rms / N);
-  if (rms < 0.012) return null;
-  const minLag = Math.floor(sr / 1000), maxLag = Math.floor(sr / 65);
+  const N = buf.length; let rms = 0;
+  for (let i = 0; i < N; i++) rms += buf[i] * buf[i];
+  rms = Math.sqrt(rms / N);
+  const gate = IS_PHONE ? 0.0035 : 0.006;
+  if (rms < gate) return { f: null, rms };
+  const th = IS_PHONE ? 0.1 : 0.2;
+  let r1 = 0, r2 = N - 1;
+  for (let i = 0; i < N / 2; i++) { if (Math.abs(buf[i]) < th * rms * 4) { r1 = i; break; } }
+  for (let i = 1; i < N / 2; i++) { if (Math.abs(buf[N - i]) < th * rms * 4) { r2 = N - i; break; } }
+  const b = buf.subarray(r1, r2), M = b.length;
+  const maxLag = Math.min(M - 1, Math.floor(sr / 55));
   const c = new Float32Array(maxLag + 1);
-  for (let lag = minLag; lag <= maxLag; lag++) { let s = 0; for (let i = 0; i < N - lag; i++) s += buf[i] * buf[i + lag]; c[lag] = s; }
-  let e0 = 0; for (let i = 0; i < N; i++) e0 += buf[i] * buf[i];
-  // 找第一个明显峰（归一化后 > 0.5），再取其后最大
-  let best = -1, bestV = 0;
-  let foundDip = false;
-  for (let lag = minLag + 1; lag < maxLag; lag++) {
-    const v = c[lag] / e0;
-    if (!foundDip) { if (v < 0.3) foundDip = true; continue; }
-    if (v > bestV && c[lag] > c[lag - 1] && c[lag] >= c[lag + 1]) { bestV = v; best = lag; }
-    if (best > 0 && v < bestV * 0.6 && lag > best * 1.3) break;
-  }
-  if (best < 0 || bestV < 0.45) return null;
-  // 抛物线插值
-  const a = c[best - 1], b = c[best], d = c[best + 1];
-  const shift = (a - d) / (2 * (a - 2 * b + d) || 1);
-  return sr / (best + shift);
+  for (let lag = 0; lag <= maxLag; lag++) { let s = 0; for (let i = 0; i < M - lag; i++) s += b[i] * b[i + lag]; c[lag] = s; }
+  let d = 0; while (d < maxLag - 1 && c[d] > c[d + 1]) d++;
+  let mv = -1, mp = -1; for (let i = d; i <= maxLag; i++) if (c[i] > mv) { mv = c[i]; mp = i; }
+  if (mp <= 0 || c[0] <= 0 || mv / c[0] < 0.2) return { f: null, rms };
+  let T0 = mp; const x1 = c[mp - 1] || 0, x2 = c[mp], x3 = c[mp + 1] || 0;
+  const a = (x1 + x3 - 2 * x2) / 2, bb = (x3 - x1) / 2; if (a) T0 = mp - bb / (2 * a);
+  const f = sr / T0;
+  return { f: (f < 55 || f > 3100) ? null : f, rms };
 }
 
 const Practice = {
@@ -1228,12 +1260,12 @@ const $$ = s => Array.from(document.querySelectorAll(s));
 const LS_KEY = 'hx_duet_harmony_v1';
 const state = {
   songId: 'twinkle', transpose: 0, tempoPct: 100, techId: 'tail', cfgs: {}, tab: 'learn', cat: '甲',
-  prac: { refVol: 60, melVol: 100, accVol: 70, right: false, countIn: true, loop: false, swap: false },
+  prac: { refVol: 60, melVol: 100, accVol: 70, right: false, countIn: true, loop: false, swap: false, micGain: 0 },
   scores: {}, plan: null, checks: {}, mode: 'both',
 };
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { } }
 function load() {
-  try { const s = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (s) { Object.assign(state, s); state.prac = Object.assign({ refVol: 60, melVol: 100, accVol: 70, right: false, countIn: true, loop: false, swap: false }, s.prac || {}); } } catch (e) { }
+  try { const s = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (s) { Object.assign(state, s); state.prac = Object.assign({ refVol: 60, melVol: 100, accVol: 70, right: false, countIn: true, loop: false, swap: false, micGain: 0 }, s.prac || {}); } } catch (e) { }
 }
 let song = null, tech = null, melNotes = [], harNotes = [], summary = null, rafId = null;
 const techById = id => TECHNIQUES.find(t => t.id === id);
@@ -1388,10 +1420,24 @@ function bindPractice() {
   $('#optLoop').onchange = e => { p.loop = e.target.checked; save(); Player.loop = p.loop; };
   $('#optSwap').onchange = e => { p.swap = e.target.checked; $('#optRight').disabled = p.swap; save(); applyVols(); };
   $('#micBtn').onclick = async () => { if (Mic.on) { Mic.stop(); } else { await Mic.start(); } renderMicBtn(); };
+  const mg = $('#micGain'); mg.value = p.micGain || (IS_PHONE ? 5 : 2); $('#micGainV').textContent = '×' + mg.value;
+  mg.oninput = e => { p.micGain = +e.target.value; $('#micGainV').textContent = '×' + p.micGain; Mic.setGain(p.micGain); save(); };
   $('#pracStart').onclick = async () => { if (Practice.running) { endPractice(); } else { await startPractice(); } };
   $('#pracStop').onclick = () => { stopAll(); };
 }
-function renderMicBtn() { $('#micBtn').textContent = Mic.on ? '麦克风：开' : '麦克风：关'; $('#micBtn').classList.toggle('on', Mic.on); }
+function renderMicBtn() { $('#micBtn').textContent = Mic.on ? '麦克风：开' : '麦克风：关'; $('#micBtn').classList.toggle('on', Mic.on); $('#micPanel').classList.toggle('hidden', !Mic.on); if (!Mic.on) { $('#liveStatus').textContent = '戴上耳机，开麦克风，然后开始'; $('#liveStatus').className = 'live'; } }
+function updateMicUI() {
+  const lv = Math.min(1, Mic.level * 12);
+  $('#micLevel').style.width = Math.round(lv * 100) + '%';
+  $('#micLevel').style.background = Mic.level < (IS_PHONE ? 0.0035 : 0.006) ? '#ccc' : (lv > 0.9 ? '#d43d3d' : '#2e9e4f');
+  if (!Practice.running) {
+    if (Mic.lastMidi != null) {
+      const m = Mic.lastMidi - Player.transpose; const deg = midiToDeg(Math.round(m)); const cents = Math.round((m - Math.round(m)) * 100);
+      $('#micNote').textContent = '听到：' + (deg ? '音级 ' + deg : PC_NAME[((Math.round(m) % 12) + 12) % 12]) + '（' + (cents >= 0 ? '+' : '') + cents + ' 音分）';
+      $('#liveStatus').textContent = '麦克风有信号'; $('#liveStatus').className = 'live hit';
+    } else { $('#micNote').textContent = Mic.level > 0 ? '听到声音，但还没测出音高——唱一个稳定的长音' : '没有信号：对着麦克风唱一个长音'; }
+  }
+}
 function applyVols() {
   if (!AudioEng.ctx) return;
   const p = state.prac;
