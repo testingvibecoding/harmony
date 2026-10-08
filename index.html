@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>对唱和声练习器 · 四类法</title>
+<style>
+:root { --bg:#f4f6f9; --card:#fff; --ink:#1d2433; --muted:#6b7280; --line:#e3e7ee; --blue:#3b6fd8; --orange:#e08a2b; --green:#2e9e4f; --red:#d43d3d; --yellow:#d9a400; --head:#1f3a5f; }
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; }
+header { background:var(--head); color:#fff; padding:10px 12px 8px; position:sticky; top:0; z-index:20; }
+.title { font-weight:700; font-size:17px; display:flex; align-items:baseline; gap:8px; }
+.title span { font-weight:400; font-size:12px; opacity:.8; }
+.transport { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; margin-top:6px; font-size:13px; }
+.transport select { font-size:14px; padding:4px 6px; border-radius:6px; border:none; max-width:46vw; }
+.ctl { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+.ctl button { width:26px; height:26px; border-radius:6px; border:none; background:rgba(255,255,255,.18); color:#fff; font-size:16px; }
+#songInfo { font-size:12px; opacity:.85; margin-top:4px; }
+.tabs { display:flex; background:#fff; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:19; }
+.tabs button { flex:1; padding:10px 4px; border:none; background:none; font-size:15px; color:var(--muted); border-bottom:3px solid transparent; }
+.tabs button.on { color:var(--head); border-bottom-color:var(--head); font-weight:700; }
+main { max-width:760px; margin:0 auto; padding:10px 10px 60px; }
+section.hidden, .hidden { display:none !important; }
+.cats { display:flex; gap:6px; margin-bottom:8px; }
+.chip { flex:1; padding:8px 4px; border-radius:10px; border:1px solid var(--line); background:#fff; font-size:14px; color:var(--ink); }
+.chip.on { background:var(--head); color:#fff; border-color:var(--head); }
+.cat-desc { background:#eef2f8; border-radius:10px; padding:8px 10px; font-size:13px; margin-bottom:8px; }
+.muted { color:var(--muted); }
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px; margin-bottom:10px; }
+.card { text-align:left; background:#fff; border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:13px; color:var(--ink); }
+.card.on { border-color:var(--orange); box-shadow:0 0 0 2px rgba(224,138,43,.25); }
+.cname { font-weight:700; font-size:14px; }
+.cshort { color:var(--muted); font-size:12px; margin-top:2px; }
+.cbest { color:var(--green); font-size:12px; margin-top:2px; }
+.detail, .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; }
+.dhead { display:flex; align-items:center; gap:8px; font-size:17px; }
+.dhead .cat { background:var(--head); color:#fff; border-radius:6px; padding:0 7px; font-size:13px; }
+.dhead .best, .pbest { color:var(--green); font-size:13px; margin-left:auto; }
+.tip { margin:6px 0 8px; color:#333; }
+.swrow { display:flex; align-items:flex-start; gap:8px; margin:6px 0; flex-wrap:wrap; }
+.swlabel { font-size:13px; color:var(--muted); min-width:52px; padding-top:5px; }
+.swopts { display:flex; flex-wrap:wrap; gap:5px; flex:1; }
+.sw { padding:5px 10px; border-radius:16px; border:1px solid var(--line); background:#fafbfd; font-size:13px; color:var(--ink); }
+.sw.on { background:var(--orange); color:#fff; border-color:var(--orange); }
+.playrow { display:flex; gap:6px; margin:10px 0 8px; }
+.pbtn { flex:1; padding:10px 4px; border-radius:10px; border:1px solid var(--line); background:#fff; font-size:14px; color:var(--ink); }
+.pbtn.on { background:var(--blue); color:#fff; border-color:var(--blue); }
+.pbtn.stop { flex:0 0 64px; background:#333; color:#fff; border-color:#333; }
+.rollwrap { width:100%; height:240px; background:#fff; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+#rollCanvas { width:100%; height:240px; display:block; }
+.sour { font-size:13px; margin:8px 0; }
+.tag { display:inline-block; padding:0 6px; border-radius:4px; color:#fff; font-size:12px; }
+.tag.sour { background:var(--red); } .tag.mild { background:var(--yellow); }
+.steps { font-size:13px; } .steps ol { margin:4px 0 0 18px; padding:0; }
+.legend { font-size:12px; color:var(--muted); margin-top:6px; }
+.lg { display:inline-block; width:12px; height:10px; border-radius:2px; vertical-align:middle; margin:0 3px 0 6px; }
+.lg.mel { background:var(--blue); } .lg.har { background:#f3c58a; } .lg.sour { background:#f7c6c6; border:2px solid var(--red); } .lg.mild { background:#fbe9b5; border:2px solid var(--yellow); }
+.gorow { margin-top:10px; }
+.big { width:100%; padding:12px; border-radius:10px; border:none; background:var(--head); color:#fff; font-size:16px; font-weight:600; }
+.big.alt { background:#fff; color:var(--head); border:1px solid var(--head); }
+.row { display:flex; gap:8px; align-items:center; margin:6px 0; font-size:14px; flex-wrap:wrap; }
+.row label { display:flex; align-items:center; gap:6px; }
+.row input[type=range] { flex:1; min-width:120px; }
+.row .v { min-width:44px; text-align:right; color:var(--muted); font-size:13px; }
+select.wide { width:100%; font-size:15px; padding:8px; border-radius:8px; border:1px solid var(--line); background:#fff; }
+.ctlrow { display:flex; gap:6px; margin:10px 0; }
+.ctlrow button { flex:1; padding:11px 4px; border-radius:10px; border:1px solid var(--line); background:#fff; font-size:14px; color:var(--ink); }
+.ctlrow button.on { background:var(--green); color:#fff; border-color:var(--green); }
+.ctlrow button.primary { background:var(--head); color:#fff; border-color:var(--head); font-weight:600; }
+.live { font-weight:700; padding:6px 10px; border-radius:8px; background:#eee; margin:6px 0; display:inline-block; min-width:140px; }
+.live.hit { background:#d8f3df; color:#1f6f35; } .live.pulled { background:#f9d6d6; color:#a12727; } .live.off { background:#eee; color:#444; } .live.silent { background:#fff2c2; color:#6b5200; } .live.extra { background:#fde3c8; color:#7a3f00; }
+.meter { position:relative; height:10px; background:linear-gradient(90deg,#f9d6d6,#d8f3df 42%,#d8f3df 58%,#f9d6d6); border-radius:5px; margin:6px 0 10px; }
+.meter .mid { position:absolute; left:50%; top:-3px; width:2px; height:16px; background:#333; }
+#centsBar { position:absolute; top:-4px; width:6px; height:18px; margin-left:-3px; background:var(--blue); border-radius:3px; left:50%; transition:left .08s; }
+.result { margin-top:10px; }
+.rhead { display:flex; align-items:center; gap:10px; }
+.score { font-size:32px; font-weight:800; color:var(--head); }
+.grade { padding:2px 10px; border-radius:14px; font-weight:700; color:#fff; background:#999; }
+.g-稳 { background:var(--green); } .g-接近 { background:var(--yellow); } .g-继续 { background:var(--red); }
+.bars { display:flex; height:12px; border-radius:6px; overflow:hidden; background:#eee; margin:8px 0 4px; }
+.bars .b { display:block; height:100%; }
+.b.hit { background:var(--green); } .b.pulled { background:var(--red); } .b.off { background:#999; } .b.silent { background:#e8c84a; }
+.rstats { font-size:13px; color:var(--muted); }
+.advice { margin:8px 0 0 18px; padding:0; font-size:14px; } .advice li { margin:4px 0; }
+.prow { display:grid; grid-template-columns:1.1fr 1.3fr 1.6fr 30px; gap:4px; margin:4px 0; }
+.prow input, .prow select { font-size:13px; padding:6px; border:1px solid var(--line); border-radius:6px; min-width:0; background:#fff; }
+.prow .pdel { border:none; background:#eee; border-radius:6px; }
+textarea { width:100%; min-height:200px; font-size:13px; border:1px solid var(--line); border-radius:8px; padding:8px; margin-top:8px; }
+.guide h3 { margin:14px 0 6px; color:var(--head); font-size:16px; }
+.guide p, .guide li { font-size:14px; }
+.guide table { width:100%; border-collapse:collapse; font-size:13px; margin:6px 0; }
+.guide th, .guide td { border:1px solid var(--line); padding:5px 6px; text-align:left; vertical-align:top; }
+.guide th { background:#eef2f8; }
+.chk { display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px solid var(--line); font-size:14px; }
+.chk input { margin-top:4px; }
+.note { font-size:12px; color:var(--muted); margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="title">对唱和声练习器 <span>四类法 · 单人练习 · 合成器示例</span></div>
+  <div class="transport">
+    <select id="songSel"></select>
+    <div class="ctl">调 <button id="keyMinus">−</button><span id="keyVal">C</span><button id="keyPlus">+</button></div>
+    <div class="ctl">速度 <button id="tmpMinus">−</button><span id="tmpVal">100%</span><button id="tmpPlus">+</button></div>
+  </div>
+  <div id="songInfo"></div>
+</header>
+<nav class="tabs">
+  <button data-tab="learn" class="on">示例</button>
+  <button data-tab="practice">练习</button>
+  <button data-tab="plan">演唱单</button>
+  <button data-tab="guide">说明</button>
+</nav>
+<main>
+  <section id="tab-learn">
+    <div class="cats" id="cats">
+      <button class="chip" data-cat="甲">甲 同一旋律</button>
+      <button class="chip" data-cat="乙">乙 一个音</button>
+      <button class="chip" data-cat="丙">丙 现成线</button>
+      <button class="chip" data-cat="丁">丁 造新音</button>
+    </div>
+    <div class="cat-desc" id="catDesc"></div>
+    <div class="cards" id="cards"></div>
+    <div class="detail" id="detail"></div>
+    <div class="note">示例全部由合成器演奏：蓝色是主旋律，橙色是和声声部；红色块是会酸的地方，黄色是轻微张力。切换上面的开关会立刻重新生成。</div>
+  </section>
+
+  <section id="tab-practice" class="hidden">
+    <div class="panel">
+      <select id="pracTech" class="wide"></select>
+      <p class="tip" id="pracTip"></p>
+      <div class="switches" id="pracSwitches"></div>
+      <div class="sour" id="pracSour"></div>
+    </div>
+    <div class="panel">
+      <div class="ctlrow">
+        <button id="micBtn">麦克风：关</button>
+        <button id="pracStart" class="primary">开始练习</button>
+        <button id="pracStop">■ 停</button>
+      </div>
+      <div class="row"><span class="live" id="liveStatus">戴上耳机，开麦克风，然后开始</span><span class="pbest" id="pracBest"></span></div>
+      <div class="meter"><div class="mid"></div><div id="centsBar"></div></div>
+      <div class="rollwrap" id="rollPrac"></div>
+      <div class="legend"><span class="lg mel"></span>主旋律 <span class="lg har"></span>目标（和声）· 绿点命中 · 红点被带跑 · 灰点跑调</div>
+    </div>
+    <div class="panel result hidden" id="result"></div>
+    <div class="panel">
+      <div class="row"><label style="min-width:84px">参考音量</label><input type="range" id="refVol" min="0" max="100" step="10"><span class="v" id="refVolV"></span></div>
+      <div class="row"><label style="min-width:84px">主旋律音量</label><input type="range" id="melVol" min="0" max="100" step="10"><span class="v" id="melVolV"></span></div>
+      <div class="row"><label style="min-width:84px">伴奏音量</label><input type="range" id="accVol" min="0" max="100" step="10"><span class="v" id="accVolV"></span></div>
+      <div class="row">
+        <label><input type="checkbox" id="optRight">右声道参考</label>
+        <label><input type="checkbox" id="optCount">预备拍</label>
+        <label><input type="checkbox" id="optLoop">循环</label>
+        <label><input type="checkbox" id="optSwap">角色互换（你唱旋律）</label>
+      </div>
+      <div class="note">练法：参考音量从 100% 逐级降到 0；被带跑就开右声道参考、把主旋律调小；连续三遍 85% 以上再升级。麦克风只在本机分析。</div>
+    </div>
+  </section>
+
+  <section id="tab-plan" class="hidden">
+    <div class="panel">
+      <input id="planSong" class="wide" style="width:100%;font-size:15px;padding:8px;border:1px solid var(--line);border-radius:8px" placeholder="歌名">
+      <div class="prow" style="color:var(--muted);font-size:12px;margin-top:8px"><span>段落</span><span>你唱什么</span><span>开关 / 备注</span><span></span></div>
+      <div id="planRows"></div>
+      <div class="ctlrow"><button id="planAdd">＋ 加一行</button><button id="planReset">恢复默认方案</button><button id="planExport" class="primary">生成文字并复制</button></div>
+      <textarea id="planOut" class="hidden" readonly></textarea>
+      <div class="note">默认方案的原则：主歌轻、副歌满；第一遍简单、第二遍加料；每段只用一种手法；结尾一定做和弦。主旋律由录音唱，你只唱表里的声部。</div>
+    </div>
+  </section>
+
+  <section id="tab-guide" class="hidden">
+    <div class="panel guide">
+      <h3>一句话原理</h3>
+      <p>和声只有两件事：<b>选对音</b>（你唱的音在当下和弦里）和<b>守住音</b>（主旋律在耳边时不被带走）。四类方法按选音的难度排：甲类不用选音，乙类只选一个音，丙类的音别人已经选好，丁类才自己选、而且只在一个位置选。</p>
+      <h3>四大类</h3>
+      <table><tr><th>类</th><th>第二声部唱什么</th><th>核心能力</th></tr>
+        <tr><td>甲 同一条旋律</td><td>和主旋律一样，只是时间、音区、范围不同</td><td>守住进入点和收音点</td></tr>
+        <tr><td>乙 一个不动的音</td><td>一个安全音或根音，长唱或短唱</td><td>对着旋律守住一个音</td></tr>
+        <tr><td>丙 现成的第二旋律</td><td>别处拿来的一条线</td><td>把一条线当新歌背下来</td></tr>
+        <tr><td>丁 自己造少量新音</td><td>在指定位置从两三个候选里选一个</td><td>选一次，然后固定</td></tr></table>
+      <h3>五个开关</h3>
+      <p>时间差（同时 / 晚进入 / 空隙里 / 整句错开）、音区（同度 / 八度 / 上方 / 下方）、范围（整段 / 整句 / 句尾 / 一个长音）、唱什么（歌词 / wu / ah / mm / 状声词）、长短与音量（越不确定越短越轻；音量是主旋律的六七成）。</p>
+      <h3>安全音</h3>
+      <p>整首歌结尾落地的音叫 do（小调叫 la），往上数第五个音叫 sol（小调 mi）。两个都是安全音，sol 更保险；酸了换另一个或停。本工具每首歌的安全音显示在顶部。</p>
+      <h3>怎么练（单人）</h3>
+      <ol>
+        <li>示例页：先“只有和声”听三遍，再“旋律＋和声”，看卷帘上红色的地方。</li>
+        <li>练习页：戴耳机、开麦克风。参考音量 100% 跟唱 → 60% → 30% → 0。</li>
+        <li>被带跑：开右声道参考，主旋律音量调到 30%，速度降 20%。</li>
+        <li>连续三遍 85% 以上，进入卡片上写的下一个技巧。</li>
+        <li>角色互换：你唱旋律、机器唱和声，用来体会“对调”和两条线的关系。</li>
+      </ol>
+      <h3>十二次练习进度</h3>
+      <div id="checks"></div>
+      <h3>说明</h3>
+      <p class="muted">示例用合成器演奏公版旋律（小星星、两只老虎、欢乐颂、送别、生日歌、友谊地久天长、帕赫贝尔卡农）和一段原创小调练习曲，不含任何原唱录音。麦克风只在本机分析，不上传。成绩和演唱单保存在本机浏览器里。</p>
+    </div>
+  </section>
+</main>
+<div id="rollPark" class="hidden"><canvas id="rollCanvas" height="240"></canvas></div>
+<script>
+/* ---- songs.js ---- */
+/* ===== 歌曲数据与简谱解析 =====
+ * 记谱：数字 1–7 为音级（相对 C 大调 do=1）；' 升八度，, 降八度；
+ * :n 为时值（拍），默认 1 拍；- 延长前一音一拍；0 休止一拍；| 小节线（仅校验）；/ 乐句结束。
+ * chords：每小节一个字符串，"F C" 表示该小节平分给两个和弦。
+ */
+const SONGS = [
+  {
+    id: 'twinkle', name: '小星星', sub: '公版童谣 · C 大调 4/4', mode: 'major', beats: 4, bpm: 96,
+    chords: ['C', 'F C', 'F C', 'G C', 'C F', 'C G', 'C F', 'C G', 'C', 'F C', 'F C', 'G C'],
+    melody: '1 1 5 5 | 6 6 5 - / | 4 4 3 3 | 2 2 1 - / | 5 5 4 4 | 3 3 2 - / | 5 5 4 4 | 3 3 2 - / | 1 1 5 5 | 6 6 5 - / | 4 4 3 3 | 2 2 1 - /',
+  },
+  {
+    id: 'tigers', name: '两只老虎', sub: '公版轮唱曲（Frère Jacques）· C 大调 4/4', mode: 'major', beats: 4, bpm: 108, canonBars: 2,
+    chords: ['C', 'C', 'C', 'C', 'C', 'C', 'C', 'C'],
+    melody: '1 2 3 1 | 1 2 3 1 / | 3 4 5 - | 3 4 5 - / | 5:.5 6:.5 5:.5 4:.5 3 1 | 5:.5 6:.5 5:.5 4:.5 3 1 / | 1 5, 1 - | 1 5, 1 - /',
+  },
+  {
+    id: 'ode', name: '欢乐颂', sub: '贝多芬 · 公版 · C 大调 4/4', mode: 'major', beats: 4, bpm: 92,
+    chords: ['C', 'G', 'C', 'C G', 'C', 'G', 'C', 'G C', 'G C', 'G C', 'G', 'C G', 'C', 'G', 'C', 'G C'],
+    melody: '3 3 4 5 | 5 4 3 2 / | 1 1 2 3 | 3:1.5 2:.5 2:2 / | 3 3 4 5 | 5 4 3 2 / | 1 1 2 3 | 2:1.5 1:.5 1:2 / | 2 2 3 1 | 2 3:.5 4:.5 3 1 / | 2 3:.5 4:.5 3 2 | 1 2 5,:2 / | 3 3 4 5 | 5 4 3 2 / | 1 1 2 3 | 2:1.5 1:.5 1:2 /',
+  },
+  {
+    id: 'farewell', name: '送别', sub: 'J. P. Ordway 曲 · 李叔同词 · 公版 · C 大调 4/4', mode: 'major', beats: 4, bpm: 72,
+    chords: ['C', 'F C', 'C', 'G', 'C', 'F C', 'G', 'C'],
+    melody: "5 3:.5 5:.5 1':2 | 6 1' 5:2 / | 5 1:.5 2:.5 3 2:.5 1:.5 | 2:4 / | 5 3:.5 5:.5 1':1.5 7:.5 | 6 1' 5:2 / | 5 2:.5 3:.5 4 7, | 1:4 /",
+  },
+  {
+    id: 'birthday', name: '生日歌', sub: '公版 · C 大调 3/4', mode: 'major', beats: 3, bpm: 100,
+    chords: ['C', 'C', 'G', 'G', 'C', 'C', 'F', 'C G', 'C'],
+    melody: "0:2 5:.75 5:.25 | 6 5 1' | 7:2 / 5:.75 5:.25 | 6 5 2' | 1':2 / 5:.75 5:.25 | 5' 3' 1' | 7 6 4':.75 4':.25 / | 3' 1' 2' | 1':3 /",
+  },
+  {
+    id: 'auld', name: '友谊地久天长', sub: '苏格兰民歌（Auld Lang Syne）· 公版 · C 大调 4/4', mode: 'major', beats: 4, bpm: 84,
+    chords: ['C', 'C', 'G', 'C', 'F', 'C', 'G', 'F G', 'C'],
+    melody: '0:3 5, | 1:1.5 1:.5 1 3 | 2:1.5 1:.5 2 3 / | 1:1.5 1:.5 3 5 | 6:3 6 / | 5:1.5 3:.5 3 1 | 2:1.5 1:.5 2 3 / | 1:1.5 6,:.5 6, 5, | 1:4 /',
+  },
+  {
+    id: 'canon', name: '卡农（帕赫贝尔）', sub: '公版 · 移到 C 大调 · 和弦两拍一换', mode: 'major', beats: 4, bpm: 66, canonBars: 2,
+    chords: ['C G', 'Am Em', 'F C', 'F G', 'C G', 'Am Em', 'F C', 'F G'],
+    melody: "3':2 2':2 | 1':2 7:2 | 6:2 5:2 | 6:2 7:2 / | 1':2 5:2 | 6:2 3:2 | 4:2 3:2 | 4:2 5:2 /",
+  },
+  {
+    id: 'minor', name: '小调练习曲', sub: '原创 8 小节 · A 小调 4/4', mode: 'minor', beats: 4, bpm: 80,
+    chords: ['Am', 'F', 'C', 'G', 'Am', 'F', 'C G', 'Am'],
+    melody: "6 7 1' 7 | 6 - 1' - / | 5 3 5 6 | 7 - 5 - / | 6 1' 2' 1' | 6 - 4 - / | 3 1 7, 2 | 6:4 /",
+  },
+];
+
+const DEG_SEMI = [0, 0, 2, 4, 5, 7, 9, 11]; // index 1..7 → semitones above do
+const CHORD_DEF = {
+  C: { root: 0, q: 'maj' }, Dm: { root: 2, q: 'min' }, Em: { root: 4, q: 'min' }, F: { root: 5, q: 'maj' },
+  G: { root: 7, q: 'maj' }, Am: { root: 9, q: 'min' }, Bdim: { root: 11, q: 'dim' },
+};
+const DO_MIDI = 60; // do = C4（变调时整体平移）
+
+function chordTones(ch) {
+  const d = CHORD_DEF[ch];
+  const third = d.q === 'maj' ? 4 : 3, fifth = d.q === 'dim' ? 6 : 7;
+  return [d.root, (d.root + third) % 12, (d.root + fifth) % 12];
+}
+// 返回和弦内音对应的音级（1..7，若是调外音则跳过）
+function chordDegrees(ch) {
+  const pcs = chordTones(ch);
+  const out = [];
+  for (let deg = 1; deg <= 7; deg++) if (pcs.includes(DEG_SEMI[deg])) out.push(deg);
+  return out;
+}
+
+/** 解析一首歌 → { notes:[{t,b,deg,oct,midi,phrase,idx}], phrases:[{start,end,first,last}], chordsAt(beat), bars, totalBeats } */
+function parseSong(song) {
+  const notes = [];
+  let t = 0, phrase = 0, bar = 0, barStart = 0;
+  const tokens = song.melody.trim().split(/\s+/);
+  for (const tk of tokens) {
+    if (tk === '|') { bar++; barStart += song.beats; continue; }
+    if (tk === '/') { if (notes.length) notes[notes.length - 1].phraseEnd = true; phrase++; continue; }
+    if (tk === '-') { if (notes.length) { notes[notes.length - 1].b += 1; } t += 1; continue; }
+    const m = tk.match(/^(0|[1-7])([',]*)(?::([\d.]+))?$/);
+    if (!m) throw new Error('bad token ' + tk + ' in ' + song.name);
+    const deg = +m[1], b = m[3] ? parseFloat(m[3]) : 1;
+    let oct = 0; for (const c of m[2]) oct += (c === "'" ? 1 : -1);
+    if (deg === 0) { t += b; continue; } // 休止不生成音符
+    const midi = DO_MIDI + DEG_SEMI[deg] + 12 * oct;
+    notes.push({ t, b, deg, oct, midi, phrase, idx: notes.length });
+    t += b;
+  }
+  const totalBeats = Math.max(t, song.chords.length * song.beats);
+  const bars = song.chords.length;
+  // 乐句
+  const phrases = [];
+  let cur = null;
+  for (const n of notes) {
+    if (!cur || cur.phrase !== n.phrase) { cur = { phrase: n.phrase, first: n.idx, last: n.idx, start: n.t, end: n.t + n.b }; phrases.push(cur); }
+    cur.last = n.idx; cur.end = n.t + n.b;
+  }
+  phrases.forEach((p, i) => { p.gapAfter = (i + 1 < phrases.length) ? phrases[i + 1].start - p.end : totalBeats - p.end; });
+  // 和弦查询
+  const chordSegs = [];
+  song.chords.forEach((str, bi) => {
+    const parts = str.split(/\s+/);
+    const seg = song.beats / parts.length;
+    parts.forEach((ch, k) => chordSegs.push({ start: bi * song.beats + k * seg, end: bi * song.beats + (k + 1) * seg, name: ch }));
+  });
+  const chordsAt = beat => {
+    for (const s of chordSegs) if (beat >= s.start - 1e-6 && beat < s.end - 1e-6) return s.name;
+    return chordSegs[chordSegs.length - 1].name;
+  };
+  const melodyAt = beat => { for (const n of notes) if (beat >= n.t - 1e-6 && beat < n.t + n.b - 1e-6) return n; return null; };
+  const lo = Math.min(...notes.map(n => n.midi)), hi = Math.max(...notes.map(n => n.midi));
+  return { ...song, notes, phrases, chordSegs, chordsAt, melodyAt, bars, totalBeats, lo, hi, mean: notes.reduce((a, n) => a + n.midi * n.b, 0) / notes.reduce((a, n) => a + n.b, 0) };
+}
+
+/* 协和度判定：'in' 和弦内音 / 'mild' 轻微（九音、六音、小七、挂四、大七）/ 'sour' 酸 */
+function consonance(midi, ch) {
+  const d = CHORD_DEF[ch];
+  const iv = ((midi - d.root) % 12 + 12) % 12;
+  const tones = chordTones(ch).map(p => ((p - d.root) % 12 + 12) % 12);
+  if (tones.includes(iv)) return 'in';
+  if ([2, 5, 9, 10, 11].includes(iv)) return 'mild';
+  return 'sour';
+}
+const DEG_NAME = ['', 'do', 're', 'mi', 'fa', 'sol', 'la', 'ti'];
+const PC_NAME = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+function midiToDeg(midi) { // 相对 C 大调的音级（调外音返回 null）
+  const pc = ((midi - DO_MIDI) % 12 + 12) % 12;
+  const i = DEG_SEMI.indexOf(pc, 1);
+  return i > 0 ? i : null;
+}
+function midiLabel(midi) { const d = midiToDeg(midi); return d ? String(d) : '#'; }
+
+/* ---- harmony.js ---- */
+/* ===== 和声生成器：四类 + 开关 ===== */
+const SCALE_PCS = [0, 2, 4, 5, 7, 9, 11];
+const PENT_PCS = [0, 2, 4, 7, 9];
+
+function pcOf(m) { return ((m % 12) + 12) % 12; }
+function isScale(m) { return SCALE_PCS.includes(pcOf(m)); }
+// 沿 C 大调音阶移动 steps 个音级（steps 可负）
+function scaleStep(midi, steps) {
+  let m = midi;
+  if (!isScale(m)) { // 调外音：先吸附到最近的调内音
+    for (let k = 1; k < 12; k++) { if (isScale(m - k)) { m = m - k; break; } if (isScale(m + k)) { m = m + k; break; } }
+  }
+  const dir = steps > 0 ? 1 : -1;
+  for (let i = 0; i < Math.abs(steps); i++) { m += dir; while (!isScale(m)) m += dir; }
+  return m;
+}
+function nearestPc(midi, pcs, dir) { // dir -1: 严格向下；+1: 严格向上；0: 最近（含本身）
+  if (dir === 0) { for (let k = 0; k < 12; k++) { if (pcs.includes(pcOf(midi - k))) return midi - k; if (pcs.includes(pcOf(midi + k))) return midi + k; } }
+  for (let k = 1; k <= 12; k++) { const m = midi + dir * k; if (pcs.includes(pcOf(m))) return m; }
+  return midi;
+}
+function placeNear(pc, ref, dir) { // 把音名放到 ref 附近：dir -1 在 ref 下方，+1 在上方
+  let m = ref - ((pcOf(ref) - pc + 12) % 12); // ref 下方（含本身）最近的该音名
+  if (dir < 0) { if (m === ref) m -= 12; }
+  else { m += 12; if (m - 12 === ref) m = ref + 12; }
+  return m;
+}
+function safePcs(song) { return song.mode === 'minor' ? { a: 4, b: 9, an: 'mi', bn: 'la' } : { a: 7, b: 0, an: 'sol', bn: 'do' }; }
+const NOTE_PC = { do: 0, re: 2, mi: 4, fa: 5, sol: 7, la: 9, ti: 11 };
+
+// 给音符标注协和度：按和弦段切分
+function annotate(song, notes) {
+  for (const n of notes) {
+    n.segs = [];
+    let t = n.t; const end = n.t + n.b;
+    while (t < end - 1e-6) {
+      const seg = song.chordSegs.find(s => t >= s.start - 1e-6 && t < s.end - 1e-6) || song.chordSegs[song.chordSegs.length - 1];
+      const e = Math.min(end, seg.end);
+      const mel = song.melodyAt(t + 0.01);
+      const same = mel && pcOf(mel.midi) === pcOf(n.midi);
+      n.segs.push({ t, b: e - t, status: same ? 'in' : consonance(n.midi, seg.name), chord: seg.name, same: !!same });
+      t = e;
+    }
+    n.status = n.segs.some(s => s.status === 'sour') ? 'sour' : (n.segs.some(s => s.status === 'mild') ? 'mild' : 'in');
+    n.label = n.label || midiLabel(n.midi);
+  }
+  return notes;
+}
+function sourSummary(song, notes) {
+  const sourBars = new Set(), mildBars = new Set();
+  for (const n of notes) for (const s of n.segs) {
+    const bar = Math.floor(s.t / song.beats) + 1;
+    if (s.status === 'sour') sourBars.add(bar); else if (s.status === 'mild') mildBars.add(bar);
+  }
+  return { sour: [...sourBars].sort((a, b) => a - b), mild: [...mildBars].filter(b => !sourBars.has(b)).sort((a, b) => a - b), count: notes.length };
+}
+function harmonyAt(notes, beat) { for (const n of notes) if (beat >= n.t - 1e-6 && beat < n.t + n.b - 1e-6) return n; return null; }
+const octShift = v => v === 'low' ? -12 : (v === 'high' ? 12 : 0);
+const mk = (t, b, midi, extra) => Object.assign({ t, b, midi }, extra || {});
+
+/* ---------- 甲类 ---------- */
+function genTail(song, cfg) {
+  const out = [];
+  const sh = octShift(cfg.octave);
+  for (const p of song.phrases) {
+    const n = cfg.range === 'all' ? (p.last - p.first + 1) : +cfg.range;
+    for (let i = Math.max(p.first, p.last - n + 1); i <= p.last; i++) { const m = song.notes[i]; out.push(mk(m.t, m.b, m.midi + sh)); }
+  }
+  return out;
+}
+function genOctave(song, cfg) {
+  const sh = cfg.octave === 'high' ? 12 : -12;
+  const src = cfg.range === 'all' ? song.notes : genTail(song, { range: 2, octave: 'same' });
+  return src.map(m => mk(m.t, m.b, m.midi + sh));
+}
+function genLate(song, cfg) {
+  const out = [], late = +cfg.late, sh = octShift(cfg.octave);
+  for (const p of song.phrases) {
+    const startAt = p.start + late;
+    for (let i = p.first; i <= p.last; i++) {
+      const m = song.notes[i]; const end = m.t + m.b;
+      if (end <= startAt + 1e-6) continue;
+      const t = Math.max(m.t, startAt);
+      out.push(mk(t, end - t, m.midi + sh));
+    }
+  }
+  return out;
+}
+function genHold(song, cfg) {
+  const out = [], ext = +cfg.extend, sh = octShift(cfg.octave);
+  for (const p of song.phrases) {
+    const m = song.notes[p.last];
+    const t = m.b >= 2 ? m.t + 1 : m.t;
+    const extra = Math.max(0, Math.min(ext, p.gapAfter - 0.25));
+    out.push(mk(t, (m.t + m.b - t) + extra, m.midi + sh, { label: midiLabel(m.midi) }));
+  }
+  return out;
+}
+function genEcho(song, cfg) {
+  const out = [], n = +cfg.len, sh = octShift(cfg.octave);
+  for (const p of song.phrases) {
+    const last = song.notes[p.last];
+    const win = echoWindow(song, p);
+    if (!win) continue;
+    const src = song.notes.slice(Math.max(p.first, p.last - n + 1), p.last + 1).map(m => ({ midi: m.midi + sh, b: Math.min(m.b, 1) }));
+    let total = src.reduce((a, s) => a + s.b, 0);
+    const avail = win.end - win.start;
+    const k = total > avail ? avail / total : 1;
+    let t = win.start;
+    for (const s of src) { const b = s.b * k; if (b < 0.2) continue; out.push(mk(t, b, s.midi)); t += b; }
+  }
+  return out;
+}
+// 回声/应答的可用窗口：乐句后的空隙，或主旋律句尾长音的后半段
+function echoWindow(song, p) {
+  const last = song.notes[p.last];
+  const nextStart = p.end + p.gapAfter;
+  let start = p.end;
+  if (p.gapAfter < 0.75) { if (last.b < 1.5) return null; start = last.t + Math.max(1, last.b / 2); }
+  const end = nextStart - 0.1;
+  if (end - start < 0.6) return null;
+  return { start, end };
+}
+function genAnswer(song, cfg) {
+  const out = [];
+  const degs = cfg.pattern.split(' ').map(Number);
+  for (const p of song.phrases) {
+    const win = echoWindow(song, p);
+    if (!win) continue;
+    const dur = Math.min(1, (win.end - win.start) / degs.length);
+    const ref = song.notes[p.last].midi;
+    let t = win.start;
+    degs.forEach(d => {
+      const pc = DEG_SEMI[d];
+      let m = placeNear(pc, ref, -1); if (ref - m > 9) m += 12;
+      out.push(mk(t, dur, m)); t += dur;
+    });
+  }
+  return out;
+}
+function genCanon(song, cfg) {
+  const d = (+cfg.delay) * song.beats, sh = octShift(cfg.octave), out = [];
+  for (const m of song.notes) { const t = m.t + d; if (t >= song.totalBeats - 1e-6) continue; out.push(mk(t, Math.min(m.b, song.totalBeats - t), m.midi + sh)); }
+  return out;
+}
+
+/* ---------- 乙类 ---------- */
+function dronePc(song, cfg) {
+  const s = safePcs(song);
+  if (cfg.note === 'safe1') return { pc: s.a, name: s.an };
+  if (cfg.note === 'safe2') return { pc: s.b, name: s.bn };
+  return { pc: NOTE_PC[cfg.note], name: cfg.note };
+}
+function droneMidi(song, pc, octave) { // 放在旋律平均音高下方或上方
+  return octave === 'high' ? placeNear(pc, Math.round(song.mean) + 3, 1) : placeNear(pc, Math.round(song.mean) - 2, -1);
+}
+function genDrone(song, cfg) {
+  const { pc, name } = dronePc(song, cfg);
+  const midi = droneMidi(song, pc, cfg.octave);
+  const span = cfg.breath === '2' ? song.beats * 2 : (cfg.breath === 'none' ? song.totalBeats : song.beats);
+  const out = [];
+  for (let t = 0; t < song.totalBeats - 1e-6; t += span) out.push(mk(t, Math.min(span, song.totalBeats - t) - (cfg.breath === 'none' ? 0 : 0.15), midi, { label: name }));
+  return out;
+}
+function genTwoDrone(song, cfg) {
+  const s = safePcs(song);
+  let pair = [{ pc: s.a, name: s.an }, { pc: s.b, name: s.bn }];
+  if (cfg.pair === 'sol-mi') pair = [{ pc: 7, name: 'sol' }, { pc: 4, name: 'mi' }];
+  if (cfg.pair === 'la-mi') pair = [{ pc: 9, name: 'la' }, { pc: 4, name: 'mi' }];
+  if (cfg.pair === 'sol-do') pair = [{ pc: 7, name: 'sol' }, { pc: 0, name: 'do' }];
+  const out = []; let cur = null;
+  for (const seg of song.chordSegs) {
+    const rank = p => ({ in: 0, mild: 1, sour: 2 })[consonance(p.pc, seg.name)];
+    let pick = pair[0];
+    if (rank(pair[0]) > rank(pair[1])) pick = pair[1];
+    else if (rank(pair[0]) === rank(pair[1]) && cur && cur.name === pair[1].name) pick = pair[1];
+    const midi = droneMidi(song, pick.pc, cfg.octave);
+    if (cur && cur.midi === midi) { cur.b += seg.end - seg.start; }
+    else { cur = mk(seg.start, seg.end - seg.start, midi, { label: pick.name, name: pick.name }); out.push(cur); }
+  }
+  out.forEach(n => { n.b -= 0.1; });
+  return out;
+}
+function genRoot(song, cfg) {
+  const out = []; let cur = null;
+  for (const seg of song.chordSegs) {
+    const root = CHORD_DEF[seg.name].root;
+    const base = cfg.octave === 'high' ? Math.round(song.mean) + 2 : Math.round(song.mean) - 7;
+    const midi = placeNear(root, base, -1);
+    if (cfg.rhythm === 'beat') { for (let t = seg.start; t < seg.end - 1e-6; t += 1) out.push(mk(t, 0.6, midi, { label: midiLabel(midi) })); }
+    else if (cur && cur.midi === midi && Math.abs(cur.t + cur.b - seg.start) < 1e-6) cur.b += seg.end - seg.start;
+    else { cur = mk(seg.start, seg.end - seg.start, midi, { label: midiLabel(midi) }); out.push(cur); }
+  }
+  if (cfg.rhythm !== 'beat') out.forEach(n => { n.b -= 0.1; });
+  return out;
+}
+function genEnding(song, cfg) {
+  const p = song.phrases[song.phrases.length - 1];
+  const out = [];
+  for (let i = p.first; i < p.last; i++) { const m = song.notes[i]; out.push(mk(m.t, m.b, m.midi)); }
+  const last = song.notes[p.last];
+  const ch = song.chordsAt(last.t);
+  const tones = chordTones(ch); const root = CHORD_DEF[ch].root;
+  let pc = tones[2]; if (cfg.end === 'third') pc = tones[1]; if (cfg.end === 'octave') pc = root;
+  let midi = placeNear(pc, last.midi, cfg.end === 'octave' ? 1 : -1);
+  if (cfg.end === 'octave' && midi - last.midi > 12) midi -= 12;
+  if (cfg.end !== 'octave' && last.midi - midi > 9) midi += 12; // 太远就放到上方
+  out.push(mk(last.t, last.b, midi, { label: midiLabel(midi) }));
+  return out;
+}
+function genPulse(song, cfg) {
+  const out = [];
+  const beatsSel = cfg.beats === '13' ? [0, 2] : (cfg.beats === '24' ? [1, 3] : [0, 1, 2, 3]);
+  for (const seg of song.chordSegs) {
+    let pc; const s = safePcs(song);
+    if (cfg.note === 'root') pc = CHORD_DEF[seg.name].root; else pc = cfg.note === 'safe2' ? s.b : s.a;
+    const midi = placeNear(pc, Math.round(song.mean) - 4, -1);
+    for (let t = Math.ceil(seg.start - 1e-6); t < seg.end - 1e-6; t += 1) {
+      const posInBar = Math.round(t) % song.beats;
+      if (!beatsSel.includes(posInBar)) continue;
+      out.push(mk(t, 0.45, midi, { label: midiLabel(midi) }));
+    }
+  }
+  return out;
+}
+function genRiff(song, cfg) {
+  const out = [];
+  for (const seg of song.chordSegs) {
+    const tones = chordTones(seg.name);
+    const pat = cfg.pattern === 'r5' ? [tones[0], tones[2]] : (cfg.pattern === '3r' ? [tones[1], tones[0]] : [tones[0], tones[1]]);
+    const step = cfg.speed === 'half' ? 0.5 : 1;
+    let k = 0;
+    for (let t = seg.start; t < seg.end - 1e-6; t += step, k++) {
+      const pc = pat[k % 2];
+      const midi = placeNear(pc, Math.round(song.mean) - 3, -1);
+      out.push(mk(t, Math.min(step * 0.9, seg.end - t), midi, { label: midiLabel(midi) }));
+    }
+  }
+  return out;
+}
+
+/* ---------- 丁类（也供丙类“现成线”使用） ---------- */
+function genThirds(song, cfg) {
+  const out = [];
+  for (const m of song.notes) {
+    let midi;
+    if (cfg.wrong === 'fixed') midi = m.midi + (cfg.side === 'up' ? 4 : -4);
+    else if (cfg.side === 'up') midi = scaleStep(m.midi, 2);
+    else if (cfg.side === 'sixth') midi = scaleStep(m.midi, 2) - 12;
+    else midi = scaleStep(m.midi, -2);
+    if (cfg.wrong !== 'fixed' && cfg.longfix !== 'no' && m.b >= 2) {
+      const ch = song.chordsAt(m.t);
+      if (consonance(midi, ch) !== 'in') midi = nearestPc(midi, chordTones(ch), cfg.side === 'up' ? 1 : -1);
+    }
+    out.push(mk(m.t, m.b, midi));
+  }
+  return out;
+}
+function genFifths(song, cfg) {
+  const out = [];
+  for (const m of song.notes) {
+    let midi = scaleStep(m.midi, -4);
+    const trap = m.deg === 4;
+    if (trap && cfg.trap !== 'raw') midi = scaleStep(m.midi, -3);
+    out.push(mk(m.t, m.b, midi, trap ? { label: midiLabel(midi) + (cfg.trap !== 'raw' ? '*' : '!') } : {}));
+  }
+  return out;
+}
+function genTailNote(song, cfg) {
+  const out = [];
+  const phrases = cfg.apply === 'last' ? [song.phrases[song.phrases.length - 1]] : song.phrases;
+  for (const p of song.phrases) {
+    const active = phrases.includes(p);
+    for (let i = p.first; i <= p.last; i++) {
+      const m = song.notes[i];
+      if (!active || i !== p.last) { out.push(mk(m.t, m.b, m.midi)); continue; }
+      const ch = song.chordsAt(m.t); const tones = chordTones(ch);
+      let cand, tag;
+      if (cfg.dir === 'up') {
+        cand = [[scaleStep(m.midi, 2), '上三度'], [scaleStep(m.midi, 3), '上四度'], [scaleStep(m.midi, 4), '上五度']];
+      } else {
+        cand = [[scaleStep(m.midi, -2), '下三度'], [scaleStep(m.midi, -3), '下四度'], [scaleStep(m.midi, -4), '下五度']];
+      }
+      let pick = cand.find(c => consonance(c[0], ch) === 'in') || cand.find(c => consonance(c[0], ch) === 'mild') || cand[0];
+      out.push(mk(m.t, m.b, pick[0], { label: midiLabel(pick[0]), tag: pick[1] }));
+    }
+  }
+  return out;
+}
+function genFill(song, cfg) {
+  const out = [];
+  const minLen = +cfg.minlen;
+  for (const m of song.notes) {
+    if (m.b < minLen) continue;
+    const ch = song.chordsAt(m.t); const tones = chordTones(ch);
+    let target = nearestPc(m.midi, tones, -1);
+    if (m.midi - target < 3) target = nearestPc(target, tones, -1);
+    // 五声音阶里 target 上方的两个音
+    const up1 = nearestPc(target, PENT_PCS, 1), up2 = nearestPc(up1, PENT_PCS, 1);
+    const seq = cfg.pattern === 'mrd' ? [up2, up1, target] : [up2, up1, target];
+    const d1 = Math.min(0.5, m.b / 4);
+    out.push(mk(m.t, d1, seq[0]));
+    out.push(mk(m.t + d1, d1, seq[1]));
+    out.push(mk(m.t + 2 * d1, m.b - 2 * d1, seq[2]));
+  }
+  return out;
+}
+function genContrary(song, cfg) {
+  const out = [];
+  for (const p of song.phrases) {
+    const limitBeats = cfg.scope === 'all' ? 1e9 : 2;
+    let prevH = null, prevM = null;
+    for (let i = p.first; i <= p.last; i++) {
+      const m = song.notes[i];
+      if (m.t - p.start >= limitBeats - 1e-6 && i !== p.first) break;
+      const tones = chordTones(song.chordsAt(m.t));
+      let h;
+      if (prevH === null) { h = nearestPc(m.midi, tones, -1); if (m.midi - h < 3) h = nearestPc(h, tones, -1); }
+      else if (m.midi > prevM) { h = nearestPc(prevH, tones, -1); }
+      else if (m.midi < prevM) { h = nearestPc(prevH, tones, 1); if (h >= m.midi) h = nearestPc(m.midi, tones, -1); }
+      else { h = tones.includes(pcOf(prevH)) ? prevH : nearestPc(prevH, tones, 0); }
+      if (h < song.lo - 14) h = nearestPc(h + 12, tones, 0);
+      out.push(mk(m.t, m.b, h)); prevH = h; prevM = m.midi;
+    }
+  }
+  return out;
+}
+/* ---------- 丙类 ---------- */
+function genSkeleton(song, cfg) {
+  const full = genThirds(song, { side: 'down', longfix: 'yes', wrong: 'ok' });
+  if (cfg.version === 'full') return full;
+  const out = [];
+  for (const p of song.phrases) {
+    const first = full[p.first], last = full[p.last];
+    if (cfg.version === 'first') { out.push(mk(first.t, last.t + last.b - first.t - 0.1, first.midi)); }
+    else { out.push(mk(first.t, first.b, first.midi)); if (p.last !== p.first) out.push(mk(last.t, last.b, last.midi)); }
+  }
+  return out;
+}
+function genCounter(song, cfg) {
+  const out = [];
+  for (const seg of song.chordSegs) {
+    const tones = chordTones(seg.name);
+    const len = seg.end - seg.start;
+    const base = cfg.octave === 'high' ? Math.round(song.mean) + 7 : Math.round(song.mean) - 5;
+    const seq = cfg.pattern === 'r5' ? [tones[0], tones[2]] : [tones[2], tones[1]];
+    if (len >= 2) {
+      const half = len / 2;
+      out.push(mk(seg.start, half - 0.05, placeNear(seq[0], base, -1)));
+      out.push(mk(seg.start + half, half - 0.05, placeNear(seq[1], base, -1)));
+    } else out.push(mk(seg.start, len - 0.05, placeNear(seq[1], base, -1)));
+  }
+  out.forEach(n => n.label = midiLabel(n.midi));
+  return out;
+}
+
+/* ---------- 技巧目录 ---------- */
+const SW = {
+  octave3: { key: 'octave', label: '音区', opts: [['same', '同度'], ['low', '低八度'], ['high', '高八度']] },
+  octave2: { key: 'octave', label: '音区', opts: [['low', '低八度'], ['high', '高八度']] },
+  octaveLH: { key: 'octave', label: '音区', opts: [['low', '低（旋律下方）'], ['high', '高（旋律上方）']] },
+  vowel: { key: 'vowel', label: '唱什么', opts: [['words', '歌词'], ['wu', 'wu'], ['ah', 'ah'], ['mm', 'mm 哼鸣']] },
+};
+const TECHNIQUES = [
+  // 甲
+  { id: 'tail', cat: '甲', name: '句尾叠唱', short: '只在每句最后两三个字跟着唱',
+    tip: '进入时直接唱当时的音，不补前面；该停时停。最常见的错误是忘了休止，唱成整句跟唱。',
+    steps: ['在歌词上把要唱的字画圈，其余划掉', '录音放主旋律，只在圈里的字开口', '先用歌词，再试 wu'],
+    switches: [{ key: 'range', label: '范围', opts: [['2', '句尾 2 音'], ['3', '句尾 3 音'], ['all', '整句']] }, SW.octave3, SW.vowel],
+    def: { range: '2', octave: 'same', vowel: 'words' }, gen: genTail, next: 'octave' },
+  { id: 'octave', cat: '甲', name: '八度叠唱', short: '同一旋律，高或低一个八度',
+    tip: '男女对唱天然差八度，这已经是最稳的和声。先把句尾最后一个音唱准，再向前加。',
+    steps: ['先用钢琴 app 给出那个八度的音', '录音放主旋律，你唱低（或高）八度', '不要把其中一个音跳回主旋律的音区'],
+    switches: [SW.octave2, { key: 'range', label: '范围', opts: [['all', '整段'], ['tail', '只句尾']] }, SW.vowel],
+    def: { octave: 'low', range: 'all', vowel: 'words' }, gen: genOctave, next: 'echo' },
+  { id: 'late', cat: '甲', name: '晚进入', short: '每句晚一两拍进来，然后同步',
+    tip: '前两拍只听，进入后立刻唱当时的音；之后与主旋律同速换音、同点收。每次换音都晚半拍，那就不是晚进入了。',
+    steps: ['选有长音的句子', '从第二或第三拍直接唱当时的音', '之后同速、同点收'],
+    switches: [{ key: 'late', label: '晚几拍', opts: [['1', '1 拍'], ['2', '2 拍']] }, SW.octave3, SW.vowel],
+    def: { late: '2', octave: 'same', vowel: 'words' }, gen: genLate, next: 'hold' },
+  { id: 'hold', cat: '甲', name: '接尾延长', short: '接住句尾长音，主旋律停后多留一拍',
+    tip: '第二拍合上，主旋律停后你再留一拍，保持同一音高不滑；下一小节换和弦前收住。',
+    steps: ['找主旋律已唱稳的长音，第二拍再加入', '主旋律停止后多留一拍，不顺势下滑', '预先定好结束点'],
+    switches: [{ key: 'extend', label: '多留', opts: [['1', '1 拍'], ['2', '2 拍']] }, SW.octave3, SW.vowel],
+    def: { extend: '1', octave: 'same', vowel: 'wu' }, gen: genHold, next: 'drone' },
+  { id: 'echo', cat: '甲', name: '回声', short: '在句后的空隙里重复句尾两三个音',
+    tip: '回声只落在主旋律换气或拖长音的地方，比主旋律更轻、更短；不改音。空隙不够就只回一个字。',
+    steps: ['确认每句后面停多久', '复制最后一两个音，不复制整句', '回声结束后留一点空白给下一句'],
+    switches: [{ key: 'len', label: '回几个音', opts: [['1', '1 音'], ['2', '2 音'], ['3', '3 音']] }, { key: 'octave', label: '音区', opts: [['same', '同度'], ['low', '低八度']] }, SW.vowel],
+    def: { len: 2, octave: 'same', vowel: 'words' }, gen: genEcho, next: 'answer' },
+  { id: 'answer', cat: '甲', name: '应答句', short: '用一句固定的小回答回应每一句',
+    tip: '回答固定成两三个音练熟，主旋律换句子你也不变；歌词可以换，音不换。回答落在空隙里。',
+    steps: ['给回答统一一个短节奏', '从同一组音开始，先在同一个和弦条件下反复用', '再扩展到其他位置，酸的地方不用'],
+    switches: [{ key: 'pattern', label: '回答', opts: [['5 3 1', '5 3 1'], ['3 2 1', '3 2 1'], ['5 5 1', '5 5 1']] }, SW.vowel],
+    def: { pattern: '5 3 1', vowel: 'words' }, gen: genAnswer, next: 'canon' },
+  { id: 'canon', cat: '甲', name: '卡农（轮唱）', short: '整句错开一两小节',
+    tip: '只用适合轮唱的曲子（两只老虎、帕赫贝尔卡农）。流行歌整句错开容易撞，看卷帘上红色的地方就知道。',
+    steps: ['先单独唱会整条旋律', '明确晚几小节进入，同速', '约定一起停的位置'],
+    switches: [{ key: 'delay', label: '晚几小节', opts: [['1', '1 小节'], ['2', '2 小节']] }, { key: 'octave', label: '音区', opts: [['same', '同度'], ['low', '低八度']] }, SW.vowel],
+    def: { delay: '2', octave: 'same', vowel: 'words' }, gen: genCanon, next: 'drone' },
+  // 乙
+  { id: 'drone', cat: '乙', name: '持续音铺底', short: '一个安全音长唱不动',
+    tip: '先试 sol 再试 do（小调先 mi 再 la）。看卷帘：红色小节就是酸的地方，那里换另一个音或停。',
+    steps: ['选音：安全音一', '用 wu 或 mm，音量是主旋律的六七成', '酸了就换另一个安全音，或停'],
+    switches: [{ key: 'note', label: '选音', opts: [['safe1', '安全音一（sol / 小调 mi）'], ['safe2', '安全音二（do / 小调 la）'], ['re', 're'], ['fa', 'fa'], ['ti', 'ti']] }, SW.octaveLH, { key: 'breath', label: '换气', opts: [['1', '每小节'], ['2', '每两小节'], ['none', '不换']] }, SW.vowel],
+    def: { note: 'safe1', octave: 'low', breath: '1', vowel: 'wu' }, gen: genDrone, next: 'twodrone' },
+  { id: 'twodrone', cat: '乙', name: '双持续音切换', short: '备两个安全音，换和弦时换',
+    tip: '只在换和弦的第一拍换音，其余时间不动。这是录音室里 pad 的做法，也是“共同音保持”的小白版。',
+    steps: ['先用单一持续音唱全曲', '标出酸的小节，在那里的第一拍提前换音', '记住换音点，每次都一样'],
+    switches: [{ key: 'pair', label: '两个音', opts: [['safe', '安全音一＋二'], ['sol-mi', 'sol＋mi'], ['la-mi', 'la＋mi']] }, SW.octaveLH, SW.vowel],
+    def: { pair: 'safe', octave: 'low', vowel: 'wu' }, gen: genTwoDrone, next: 'root' },
+  { id: 'root', cat: '乙', name: '根音线（跟贝斯）', short: '每换和弦唱一个根音',
+    tip: '一个和弦一个长音，中间旋律怎么动都不管。真歌里照抄贝斯即可，它几乎总在和弦里。',
+    steps: ['听贝斯，每换和弦哼一个长音', '低音区唱最合适', '跟不上就只在换和弦的第一拍唱一下'],
+    switches: [SW.octaveLH, { key: 'rhythm', label: '节奏', opts: [['long', '长音'], ['beat', '每拍一下']] }, SW.vowel],
+    def: { octave: 'low', rhythm: 'long', vowel: 'wu' }, gen: genRoot, next: 'ending' },
+  { id: 'ending', cat: '乙', name: '结尾和弦', short: '最后一个字，旋律落 do 你留 sol',
+    tip: '前面齐唱，最后一个字旋律落到 do，你留在 sol 不动——甚至不用换音。想甜一点就唱 mi。整首歌只做这一处也值得。',
+    steps: ['最后一句齐唱', '最后一个字留在五音（或三音）', '拖到伴奏停'],
+    switches: [{ key: 'end', label: '结尾音', opts: [['fifth', '五音（sol）'], ['third', '三音（mi）'], ['octave', '高八度']] }, SW.vowel],
+    def: { end: 'fifth', vowel: 'words' }, gen: genEnding, next: 'tailnote' },
+  { id: 'pulse', cat: '乙', name: '口号式节奏', short: '一个安全音，短促地打节奏',
+    tip: '短、轻、在拍子上；旋律唱字时你停。轻快的歌用，慢歌不用；一首歌只在一两段用。',
+    steps: ['先只拍节奏', '给节奏配一个安全音或根音，短唱并留空', '旋律密时你唱稀'],
+    switches: [{ key: 'note', label: '选音', opts: [['safe1', '安全音一'], ['safe2', '安全音二'], ['root', '根音']] }, { key: 'beats', label: '哪几拍', opts: [['13', '一、三拍'], ['24', '二、四拍'], ['all', '每拍']] }, { key: 'vowel', label: '唱什么', opts: [['dum', 'dum'], ['doo', 'doo'], ['la', '啦']] }],
+    def: { note: 'safe1', beats: '13', vowel: 'dum' }, gen: genPulse, next: 'riff' },
+  { id: 'riff', cat: '乙', name: '固定短句', short: '两个和弦音来回反复，随和弦换',
+    tip: '节奏不变，音随和弦换。主旋律有重要歌词的小节可以省略一次。',
+    steps: ['写一个能独立唱稳的短音型', '确定哪些小节重复、哪些停', '先唱 wu，再试 doo'],
+    switches: [{ key: 'pattern', label: '音型', opts: [['r3', '根音-三音'], ['r5', '根音-五音'], ['3r', '三音-根音']] }, { key: 'speed', label: '速度', opts: [['beat', '每拍一音'], ['half', '每半拍一音']] }, SW.vowel],
+    def: { pattern: 'r3', speed: 'beat', vowel: 'wu' }, gen: genRiff, next: 'skeleton' },
+  // 丙
+  { id: 'skeleton', cat: '丙', name: '现成和声 → 骨架', short: '把一条现成的和声减成起音和落音',
+    tip: '把现成的线当新歌背：先完整听，再只唱起音和落音，中间休止；稳了再补中间。',
+    steps: ['先用“只有和声”听三遍', '版本一：只唱每句的起音并拖住', '版本二：起音＋落音；再回到完整版'],
+    switches: [{ key: 'version', label: '版本', opts: [['full', '完整（调内下三度）'], ['first', '起音拖住'], ['two', '起音＋落音']] }, SW.vowel],
+    def: { version: 'two', vowel: 'wu' }, gen: genSkeleton, next: 'counter' },
+  { id: 'counter', cat: '丙', name: '借前奏旋律（对位线）', short: '一条按和弦写的乐器线，用 wu 唱在旋律下面',
+    tip: '前奏是按这首歌的和弦写的，所以能叠在旋律下面；它的节奏和旋律不同，旋律拖长音时它在动。',
+    steps: ['先把这条线哼会（只有和声）', '旋律放出来时用 wu 唱它', '哪几小节酸就在那几小节改持续音'],
+    switches: [{ key: 'pattern', label: '线型', opts: [['53', '五音→三音'], ['r5', '根音→五音']] }, SW.octaveLH, SW.vowel],
+    def: { pattern: '53', octave: 'low', vowel: 'wu' }, gen: genCounter, next: 'learn' },
+  { id: 'learn', cat: '丙', name: '背一条现成的线', short: '参考音量从 100% 降到 0，背下来',
+    tip: '这是丙类的本体：任何一条现成的和声（这里用调内下三度），背到参考静音仍能唱回它。练习模式里把“参考音量”逐级调低。',
+    steps: ['只有和声：循环听到能清唱', '参考 60% → 30% → 0，旋律正常音量', '右声道参考：稳了摘掉右耳'],
+    switches: [{ key: 'side', label: '现成线', opts: [['down', '调内下三度'], ['up', '调内上三度'], ['sixth', '下六度']] }, SW.vowel],
+    def: { side: 'down', vowel: 'wu' }, gen: (s, c) => genThirds(s, { side: c.side, longfix: 'yes', wrong: 'ok' }), next: 'tailnote' },
+  // 丁
+  { id: 'tailnote', cat: '丁', name: '句尾换音', short: '整句齐唱，只在句尾长音换一个音',
+    tip: '在旋律下方时先试下三度，酸了试下四度；在上方时先试上三度。一首歌只动三到五处，定了就每次都一样。',
+    steps: ['先只做最后一句', '句尾录三版比较，留一版', '稳了再加前面的句尾'],
+    switches: [{ key: 'dir', label: '方向', opts: [['down', '下方（下三度→下四度）'], ['up', '上方（上三度→上四度）']] }, { key: 'apply', label: '范围', opts: [['last', '只最后一句'], ['all', '每句句尾']] }, SW.vowel],
+    def: { dir: 'down', apply: 'all', vowel: 'words' }, gen: genTailNote, next: 'fill' },
+  { id: 'fill', cat: '丁', name: '长音绕音', short: '旋律拖长音时，用五声音阶绕三个音落到和弦音',
+    tip: '只用 do re mi sol la，绕完一定落在和弦音上；一段只用一次，多了就抢主旋律。',
+    steps: ['找旋律里两拍以上的长音', '用 wu 唱三个音的小下行，落到和弦音', '其余地方休息'],
+    switches: [{ key: 'minlen', label: '长音至少', opts: [['2', '2 拍'], ['3', '3 拍']] }, { key: 'pattern', label: '型', opts: [['lsm', '小下行（如 la-sol-mi）']] }, SW.vowel],
+    def: { minlen: '2', pattern: 'lsm', vowel: 'wu' }, gen: genFill, next: 'contrary' },
+  { id: 'contrary', cat: '丁', name: '局部反向', short: '旋律往上你往下，只用和弦音',
+    tip: '两条线分开又合上，比平行更独立、更不易被带跑。每个音都是和弦音，不能用“旋律往上我就随便往下”代替选音。',
+    steps: ['只取每句前两拍', '先听两个音的组合，再连成短句', '先练写好的结果，再凭听感改'],
+    switches: [{ key: 'scope', label: '范围', opts: [['2', '每句前两拍'], ['all', '整句']] }, SW.vowel],
+    def: { scope: '2', vowel: 'wu' }, gen: genContrary, next: 'thirds' },
+  { id: 'thirds', cat: '丁', name: '整句调内三度（可选）', short: '逐音按调内音阶数三度，长音处修正到和弦音',
+    tip: '三度时大时小，要按调内音阶数；按固定距离唱会出调——切到“错误示范”听听就明白。非专业目标是背会一句，不必即兴。',
+    steps: ['先只听“只有和声”', '句首第一个三度音抓到，后面像升 key 唱旋律', '长音处核对和弦'],
+    switches: [{ key: 'side', label: '方向', opts: [['down', '下三度'], ['up', '上三度'], ['sixth', '下六度']] }, { key: 'longfix', label: '长音修正', opts: [['yes', '修正到和弦音'], ['no', '不修正']] }, { key: 'wrong', label: '示范', opts: [['ok', '正确（调内）'], ['fixed', '错误示范（固定大三度）']] }, SW.vowel],
+    def: { side: 'down', longfix: 'yes', wrong: 'ok', vowel: 'words' }, gen: genThirds, next: 'fifths' },
+  { id: 'fifths', cat: '丁', name: '低五度平行（可选）', short: '旋律下方唱五度，遇 fa 改 do',
+    tip: '空旷、民谣感，别整首用。旋律到 fa 时五度下方是 ti（三全音），改唱 do；切到“不处理”听听陷阱。',
+    steps: ['整句在旋律下方唱五度', '旋律是 fa 的字改唱 do', '只用在五声风格的段落'],
+    switches: [{ key: 'trap', label: '遇 fa', opts: [['fix', '改唱 do'], ['raw', '不处理（听陷阱）']] }, SW.vowel],
+    def: { trap: 'fix', vowel: 'wu' }, gen: genFifths, next: 'tail' },
+];
+const CAT_INFO = {
+  '甲': { name: '甲 · 唱同一条旋律', core: '守住进入点和收音点', desc: '不用选音，永远不会酸；只管什么时候进、什么时候停、哪个八度。' },
+  '乙': { name: '乙 · 唱一个不动的音', core: '对着旋律守住一个音', desc: '只选一个安全音；乙类的练习就是抗带跑训练。' },
+  '丙': { name: '丙 · 唱现成的第二旋律', core: '把一条线当新歌背下来', desc: '音已经选好，只用背：参考音量从 100% 降到 0。' },
+  '丁': { name: '丁 · 自己造少量新音', core: '选一次，然后固定', desc: '只在句尾或长音处，从两三个候选里用耳朵选一个。' },
+};
+function generate(song, tech, cfg) {
+  const notes = tech.gen(song, Object.assign({}, tech.def, cfg || {}));
+  annotate(song, notes);
+  return notes;
+}
+
+/* ---- engine.js ---- */
+/* ===== 音频引擎：合成人声、伴奏、调度 ===== */
+const AudioEng = {
+  ctx: null, master: null, g: {}, panner: null, waves: {}, noiseBuf: null, active: new Set(),
+  TIMBRES: {
+    /* wave/低通倍率/Q/起音/揉音(速率,深度,延迟)/气声(量,频率倍率)/音量/双振荡失谐 */
+    violin: { wave: 'saw', lp: 5.5, q: .8, a: .09, vr: 6.1, vd: .009, vdel: .18, br: .05, bf: 2.6, vel: .62, det: 5 },
+    words: { wave: 'reed', lp: 3.6, q: 1.1, a: .03, vr: 5.2, vd: .006, vdel: .26, br: .08, bf: 1.1, vel: .58, det: 0 },
+    wu: { wave: 'flute', lp: 0, q: 0, a: .05, vr: 5.6, vd: .007, vdel: .24, br: .12, bf: 3.2, vel: .78, det: 0 },
+    ah: { wave: 'saw', lp: 2.8, q: .5, a: .06, vr: 5.4, vd: .007, vdel: .25, br: .04, bf: 2, vel: .5, det: 3 },
+    mm: { wave: 'sine', lp: 1.3, q: .3, a: .06, vr: 5.5, vd: .006, vdel: .3, br: .03, bf: 3, vel: .75, det: 0 },
+    dum: { wave: 'reed', lp: 2.0, q: .6, a: .012, vr: 0, vd: 0, vdel: 1, br: .05, bf: 1, vel: .7, det: 0 },
+    doo: { wave: 'flute', lp: 0, q: 0, a: .015, vr: 0, vd: 0, vdel: 1, br: .08, bf: 2, vel: .8, det: 0 },
+    la: { wave: 'saw', lp: 3.0, q: .5, a: .015, vr: 0, vd: 0, vdel: 1, br: .03, bf: 2, vel: .55, det: 2 },
+  },
+  ensure() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return this.ctx; }
+    const C = window.AudioContext || window.webkitAudioContext;
+    const ctx = this.ctx = new C();
+    this.master = ctx.createGain(); this.master.gain.value = 0.6;
+    this.comp = ctx.createDynamicsCompressor(); this.comp.threshold.value = -14; this.comp.knee.value = 10; this.comp.ratio.value = 4; this.comp.attack.value = 0.005; this.comp.release.value = 0.15;
+    this.master.connect(this.comp); this.comp.connect(ctx.destination);
+    for (const k of ['pad', 'bass', 'mel', 'har', 'click']) { this.g[k] = ctx.createGain(); this.g[k].gain.value = 0.8; }
+    this.g.pad.connect(this.master); this.g.bass.connect(this.master); this.g.mel.connect(this.master); this.g.click.connect(this.master);
+    if (ctx.createStereoPanner) { this.panner = ctx.createStereoPanner(); this.g.har.connect(this.panner); this.panner.connect(this.master); }
+    else { this.panner = null; this.g.har.connect(this.master); }
+    this.makeWaves();
+    return ctx;
+  },
+  setPan(right) { if (this.panner) this.panner.pan.setTargetAtTime(right ? 1 : 0, this.ctx.currentTime, 0.02); },
+  setVol(part, v) { if (this.g[part]) this.g[part].gain.setTargetAtTime(v, this.ctx.currentTime, 0.03); },
+  makeWaves() {
+    const ctx = this.ctx;
+    const mk = (n, fn) => { const re = new Float32Array(n), im = new Float32Array(n); for (let k = 1; k < n; k++) im[k] = fn(k); return ctx.createPeriodicWave(re, im); };
+    this.waves.saw = mk(18, k => Math.pow(1 / k, 1.08) * (k % 2 ? 1 : .82));
+    this.waves.reed = mk(14, k => k % 2 ? 1.15 / k : 0.22 / k);
+    this.waves.flute = mk(8, k => [0, 1, .34, .10, .045, .02, 0, 0][k] || 0);
+    this.waves.sine = mk(4, k => k === 1 ? 1 : (k === 3 ? .04 : 0));
+    const len = Math.floor(ctx.sampleRate * 0.4); this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = this.noiseBuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  },
+  midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); },
+  track(node, stopAt) { this.active.add(node); node.onended = () => this.active.delete(node); },
+  playVoice(midi, when, dur, dest, tid, vel) {
+    const ctx = this.ctx, P = this.TIMBRES[tid] || this.TIMBRES.wu;
+    const f = this.midiToFreq(midi), d = Math.max(dur, 0.12);
+    const oscs = [ctx.createOscillator()];
+    if (P.det) { oscs.push(ctx.createOscillator()); oscs[0].detune.value = P.det; oscs[1].detune.value = -P.det; }
+    const mix = ctx.createGain(); mix.gain.value = P.det ? 0.6 : 1;
+    let lfo = null;
+    if (P.vr) {
+      lfo = ctx.createOscillator(); const lg = ctx.createGain();
+      lfo.frequency.value = P.vr; lg.gain.setValueAtTime(0, when);
+      lg.gain.setValueAtTime(0, when + Math.min(P.vdel, d * .45));
+      lg.gain.linearRampToValueAtTime(f * P.vd, when + Math.min(P.vdel + .25, d * .8));
+      lfo.connect(lg); for (const o of oscs) lg.connect(o.frequency);
+    }
+    for (const o of oscs) { o.setPeriodicWave(this.waves[P.wave]); o.frequency.setValueAtTime(f, when); o.connect(mix); }
+    let node = mix;
+    if (P.lp) { const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = P.q; lp.frequency.setValueAtTime(Math.min(f * P.lp, 9000), when); node.connect(lp); node = lp; }
+    const env = ctx.createGain();
+    const v = (vel == null ? 1 : vel) * P.vel;
+    env.gain.setValueAtTime(0.0001, when);
+    env.gain.linearRampToValueAtTime(v, when + P.a);
+    env.gain.setValueAtTime(v, when + Math.max(P.a, d - 0.08));
+    env.gain.linearRampToValueAtTime(0.0001, when + d);
+    node.connect(env); env.connect(dest);
+    if (P.br) { // 气声
+      const src = ctx.createBufferSource(); src.buffer = this.noiseBuf; src.loop = true;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = Math.min(f * P.bf, 6000); bp.Q.value = 2.5;
+      const bg = ctx.createGain(); bg.gain.setValueAtTime(0, when); bg.gain.linearRampToValueAtTime(v * P.br, when + P.a); bg.gain.setValueAtTime(v * P.br, when + Math.max(P.a, d - .08)); bg.gain.linearRampToValueAtTime(0, when + d);
+      src.connect(bp); bp.connect(bg); bg.connect(dest); src.start(when); src.stop(when + d + .02); this.track(src);
+    }
+    for (const o of oscs) { o.start(when); o.stop(when + d + .02); this.track(o); }
+    if (lfo) { lfo.start(when); lfo.stop(when + d + .02); this.track(lfo); }
+  },
+  playPad(chord, when, dur, vel) {
+    const ctx = this.ctx; const tones = chordTones(chord);
+    const root = CHORD_DEF[chord].root;
+    const env = ctx.createGain(); env.gain.setValueAtTime(0.0001, when); env.gain.linearRampToValueAtTime((vel || 1) * 0.11, when + 0.08);
+    env.gain.setValueAtTime((vel || 1) * 0.11, when + Math.max(0.1, dur - 0.12)); env.gain.linearRampToValueAtTime(0.0001, when + dur);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1100; lp.Q.value = 0.4;
+    lp.connect(env); env.connect(this.g.pad);
+    const base = 48 + root; // C3 区
+    tones.forEach((pc, i) => { let m = base + ((pc - root + 12) % 12); const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = this.midiToFreq(m); o.connect(lp); o.start(when); o.stop(when + dur + .02); this.track(o); });
+  },
+  playBass(chord, when, dur) {
+    const ctx = this.ctx; const root = CHORD_DEF[chord].root; const m = 36 + root;
+    const env = ctx.createGain(); env.gain.setValueAtTime(0.0001, when); env.gain.linearRampToValueAtTime(0.35, when + 0.01); env.gain.exponentialRampToValueAtTime(0.001, when + Math.min(dur, 1.4));
+    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = this.midiToFreq(m);
+    const o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = this.midiToFreq(m); const g2 = ctx.createGain(); g2.gain.value = 0.25;
+    o.connect(env); o2.connect(g2); g2.connect(env); env.connect(this.g.bass);
+    o.start(when); o.stop(when + dur + .02); o2.start(when); o2.stop(when + dur + .02); this.track(o); this.track(o2);
+  },
+  playClick(when, accent) {
+    const ctx = this.ctx; const src = ctx.createBufferSource(); src.buffer = this.noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = accent ? 2200 : 1500; bp.Q.value = 6;
+    const g = ctx.createGain(); g.gain.setValueAtTime(accent ? 0.5 : 0.3, when); g.gain.exponentialRampToValueAtTime(0.001, when + 0.07);
+    src.connect(bp); bp.connect(g); g.connect(this.g.click); src.start(when); src.stop(when + 0.1); this.track(src);
+  },
+  killAll() {
+    for (const n of this.active) { try { n.stop(0); } catch (e) { } }
+    this.active.clear();
+  },
+};
+
+/* 播放器：按拍调度旋律、和声、伴奏 */
+const Player = {
+  song: null, mel: [], har: [], bpm: 90, transpose: 0, loop: true,
+  flags: { mel: true, har: true, pad: true, bass: true, countIn: false },
+  timbre: { mel: 'violin', har: 'wu' },
+  playing: false, startCtxT: 0, idx: {}, timer: null, offset: 0, countBeats: 0,
+  onStop: null, onEnd: null,
+  b2s(b) { return b * 60 / this.bpm; },
+  s2b(s) { return s * this.bpm / 60; },
+  curBeat() { if (!this.playing) return this.offset; return this.s2b(AudioEng.ctx.currentTime - this.startCtxT) - this.countBeats; },
+  start(fromBeat) {
+    const ctx = AudioEng.ensure();
+    this.stop(true);
+    this.offset = fromBeat || 0;
+    this.countBeats = this.flags.countIn ? this.song.beats : 0;
+    this.startCtxT = ctx.currentTime + 0.12 - this.b2s(this.offset);
+    this.playing = true;
+    this.resetIdx(this.offset);
+    this.cycle = 0;
+    if (this.flags.countIn) {
+      for (let i = 0; i < this.song.beats; i++) AudioEng.playClick(this.startCtxT + this.b2s(this.offset + i), i === 0);
+    }
+    this.timer = setInterval(() => this.schedule(), 40);
+    this.schedule();
+  },
+  stop(silent) {
+    if (this.timer) { clearInterval(this.timer); this.timer = null; }
+    if (this.playing) { this.offset = Math.max(0, Math.min(this.song ? this.song.totalBeats : 0, this.curBeat())); }
+    this.playing = false;
+    AudioEng.killAll();
+    if (!silent && this.onStop) this.onStop();
+  },
+  resetIdx(fromBeat) {
+    const f = (arr) => { let i = arr.findIndex(e => e.t + e.b > fromBeat + 1e-6); return i < 0 ? arr.length : i; };
+    this.idx = { mel: f(this.mel), har: f(this.har), chord: this.song.chordSegs.findIndex(s => s.end > fromBeat + 1e-6) };
+    if (this.idx.chord < 0) this.idx.chord = this.song.chordSegs.length;
+  },
+  schedule() {
+    if (!this.playing) return;
+    const ctx = AudioEng.ctx, now = ctx.currentTime, horizon = now + 0.25;
+    const base = this.startCtxT + this.b2s(this.countBeats) + this.b2s(this.cycle * this.song.totalBeats);
+    const tr = this.transpose;
+    const sched = (part, arr, dest, tid, vel) => {
+      while (this.idx[part] < arr.length) {
+        const e = arr[this.idx[part]]; const tOn = base + this.b2s(e.t);
+        if (tOn > horizon) return false;
+        this.idx[part]++;
+        if (tOn < now - 0.05) continue;
+        if (!this.flags[part]) continue;
+        const sub = e.t < this.offset ? this.offset - e.t : 0; // 从中间开始时截短
+        AudioEng.playVoice(e.midi + tr, Math.max(tOn, now), this.b2s(e.b - sub) - 0.03, dest, tid, vel);
+      }
+      return true;
+    };
+    sched('mel', this.mel, AudioEng.g.mel, this.timbre.mel, 1);
+    sched('har', this.har, AudioEng.g.har, this.timbre.har, 1);
+    while (this.idx.chord < this.song.chordSegs.length) {
+      const s = this.song.chordSegs[this.idx.chord]; const tOn = base + this.b2s(s.start);
+      if (tOn > horizon) break;
+      this.idx.chord++;
+      if (tOn < now - 0.05) continue;
+      const dur = this.b2s(s.end - s.start);
+      if (this.flags.pad) AudioEng.playPad(s.name, Math.max(tOn, now), dur);
+      if (this.flags.bass) {
+        AudioEng.playBass(s.name, Math.max(tOn, now), Math.min(dur, this.b2s(2)));
+        if (s.end - s.start >= 4) AudioEng.playBass(s.name, tOn + this.b2s(2), this.b2s(2));
+      }
+    }
+    // 到结尾
+    const endT = base + this.b2s(this.song.totalBeats);
+    if (now >= endT - 0.02) {
+      if (this.loop) { this.cycle++; this.offset = 0; this.resetIdx(0); if (this.onLoop) this.onLoop(); }
+      else { this.stop(); this.offset = 0; if (this.onEnd) this.onEnd(); }
+    }
+  },
+  beatInCycle() { // 当前循环内的拍（0..total）
+    const b = this.curBeat() - this.cycle * (this.song ? this.song.totalBeats : 0);
+    return b;
+  },
+};
+
+/* ---- roll.js ---- */
+/* ===== 卷帘显示 ===== */
+const Roll = {
+  canvas: null, ctx2d: null, song: null, mel: [], har: [], trail: [], pxPerBeat: 44, lo: 55, hi: 79, W: 0, H: 0, dpr: 1,
+  colors: { mel: '#3b6fd8', har: '#e08a2b', in: '#3aa655', mild: '#d9a400', sour: '#d43d3d', grid: '#e4e8ee', bar: '#c5ccd6', text: '#556', bg: '#ffffff', play: '#222' },
+  init(canvas) { this.canvas = canvas; this.ctx2d = canvas.getContext('2d'); this.resize(); window.addEventListener('resize', () => this.resize()); },
+  resize() {
+    if (!this.canvas) return;
+    const r = this.canvas.getBoundingClientRect(); this.dpr = window.devicePixelRatio || 1;
+    this.W = Math.max(200, r.width); this.H = this.canvas.height / this.dpr || 240;
+    this.canvas.width = this.W * this.dpr; this.canvas.height = this.H * this.dpr;
+    this.ctx2d.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    this.pxPerBeat = this.W < 480 ? 40 : 52;
+    this.draw(this.lastBeat || 0);
+  },
+  setData(song, mel, har) {
+    this.song = song; this.mel = mel || []; this.har = har || []; this.trail = [];
+    const all = [...this.mel, ...this.har].map(n => n.midi);
+    const lo = Math.min(...all), hi = Math.max(...all);
+    this.lo = lo - 2; this.hi = hi + 2; if (this.hi - this.lo < 12) { const c = (this.hi + this.lo) / 2; this.lo = c - 6; this.hi = c + 6; }
+  },
+  yOf(midi) { const h = this.H - 26; return 18 + (this.hi - midi) / (this.hi - this.lo) * h; },
+  rowH() { return (this.H - 26) / (this.hi - this.lo); },
+  draw(beat, opts) {
+    const c = this.ctx2d; if (!c || !this.song) return;
+    this.lastBeat = beat;
+    const W = this.W, H = this.H, pb = this.pxPerBeat;
+    const viewStart = Math.max(0, beat - W * 0.3 / pb);
+    const xOf = b => (b - viewStart) * pb;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = this.colors.bg; c.fillRect(0, 0, W, H);
+    const rh = this.rowH();
+    // 调内音的横线（do 行加深）
+    for (let m = Math.ceil(this.lo); m <= this.hi; m++) {
+      const y = this.yOf(m); const deg = midiToDeg(m);
+      if (!deg) continue;
+      c.strokeStyle = deg === 1 ? '#cfd6e0' : this.colors.grid; c.lineWidth = 1; c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.85)'; c.fillRect(0, y - 10, 12, 11); c.fillStyle = '#99a'; c.font = '10px system-ui'; c.textAlign = 'left'; c.fillText(String(deg), 2, y - 1);
+    }
+    // 小节线与和弦名
+    const beats = this.song.beats;
+    for (let b = Math.floor(viewStart / beats) * beats; b <= viewStart + W / pb + beats; b += beats) {
+      const x = xOf(b); if (x < -5 || x > W + 5) continue;
+      c.strokeStyle = this.colors.bar; c.lineWidth = 1; c.beginPath(); c.moveTo(x, 0); c.lineTo(x, H); c.stroke();
+      c.fillStyle = this.colors.text; c.font = '11px system-ui'; c.textAlign = 'left'; c.fillText(String(Math.floor(b / beats) + 1), x + 3, H - 8);
+    }
+    for (const s of this.song.chordSegs) {
+      const x = xOf(s.start); if (x > W + 5 || xOf(s.end) < -5) continue;
+      c.fillStyle = '#334'; c.font = 'bold 12px system-ui'; c.textAlign = 'left'; c.fillText(s.name, x + 3, 12);
+    }
+    const drawNote = (n, fill, isHar) => {
+      const x0 = xOf(n.t), x1 = xOf(n.t + n.b);
+      if (x1 < -5 || x0 > W + 5) return;
+      const y = this.yOf(n.midi) - rh / 2 - 1, h = Math.max(6, rh - 2);
+      if (isHar && n.segs) {
+        for (const s of n.segs) {
+          const sx0 = xOf(s.t), sx1 = xOf(s.t + s.b);
+          c.fillStyle = s.status === 'sour' ? '#f7c6c6' : (s.status === 'mild' ? '#fbe9b5' : fill);
+          c.fillRect(sx0, y, Math.max(2, sx1 - sx0), h);
+          if (s.status !== 'in') { c.strokeStyle = s.status === 'sour' ? this.colors.sour : this.colors.mild; c.lineWidth = 2; c.strokeRect(sx0 + 1, y + 1, Math.max(2, sx1 - sx0) - 2, h - 2); }
+        }
+      } else { c.fillStyle = fill; c.fillRect(x0, y, Math.max(2, x1 - x0 - 1), h); }
+      const lab = n.label || midiLabel(n.midi);
+      if (x1 - x0 > 12 && h >= 9) { c.fillStyle = isHar ? '#5a3a00' : '#fff'; c.font = '10px system-ui'; c.textAlign = 'left'; c.fillText(lab, x0 + 3, y + h - 2); }
+    };
+    for (const n of this.mel) drawNote(n, this.colors.mel, false);
+    for (const n of this.har) drawNote(n, '#f3c58a', true);
+    // 麦克风轨迹
+    for (const p of this.trail) {
+      const x = xOf(p.t); if (x < 0 || x > W) continue;
+      c.fillStyle = p.status === 'hit' ? '#2e9e4f' : (p.status === 'pulled' ? '#d43d3d' : (p.status === 'off' ? '#999' : '#bbb'));
+      c.beginPath(); c.arc(x, this.yOf(p.midi), 2.2, 0, Math.PI * 2); c.fill();
+    }
+    // 播放头
+    const px = xOf(beat);
+    c.strokeStyle = this.colors.play; c.lineWidth = 2; c.beginPath(); c.moveTo(px, 0); c.lineTo(px, H); c.stroke();
+    if (opts && opts.countIn) { c.fillStyle = 'rgba(0,0,0,.55)'; c.fillRect(0, 0, W, H); c.fillStyle = '#fff'; c.font = 'bold 28px system-ui'; c.textAlign = 'center'; c.fillText('预备 ' + opts.countIn, W / 2, H / 2 + 10); }
+  },
+};
+
+/* ---- practice.js ---- */
+/* ===== 麦克风测音与练习评分 ===== */
+const Mic = {
+  stream: null, analyser: null, buf: null, on: false, src: null,
+  async start() {
+    const ctx = AudioEng.ensure();
+    if (this.on) return true;
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }, video: false });
+    } catch (e) { alert('无法打开麦克风：' + (e.message || e) + '\n请在浏览器里允许麦克风权限，并用 https 或本地文件打开。'); return false; }
+    this.src = ctx.createMediaStreamSource(this.stream);
+    this.analyser = ctx.createAnalyser(); this.analyser.fftSize = 2048;
+    this.src.connect(this.analyser);
+    this.buf = new Float32Array(this.analyser.fftSize);
+    this.on = true; return true;
+  },
+  stop() {
+    if (this.stream) this.stream.getTracks().forEach(t => t.stop());
+    if (this.src) { try { this.src.disconnect(); } catch (e) { } }
+    this.stream = null; this.src = null; this.analyser = null; this.on = false;
+  },
+  /** 返回 midi（浮点）或 null */
+  read() {
+    if (!this.on) return null;
+    this.analyser.getFloatTimeDomainData(this.buf);
+    const f = detectPitch(this.buf, AudioEng.ctx.sampleRate);
+    if (!f || f < 60 || f > 1200) return null;
+    return 69 + 12 * Math.log2(f / 440);
+  },
+};
+function detectPitch(buf, sr) {
+  const N = buf.length;
+  let rms = 0; for (let i = 0; i < N; i++) rms += buf[i] * buf[i]; rms = Math.sqrt(rms / N);
+  if (rms < 0.012) return null;
+  const minLag = Math.floor(sr / 1000), maxLag = Math.floor(sr / 65);
+  const c = new Float32Array(maxLag + 1);
+  for (let lag = minLag; lag <= maxLag; lag++) { let s = 0; for (let i = 0; i < N - lag; i++) s += buf[i] * buf[i + lag]; c[lag] = s; }
+  let e0 = 0; for (let i = 0; i < N; i++) e0 += buf[i] * buf[i];
+  // 找第一个明显峰（归一化后 > 0.5），再取其后最大
+  let best = -1, bestV = 0;
+  let foundDip = false;
+  for (let lag = minLag + 1; lag < maxLag; lag++) {
+    const v = c[lag] / e0;
+    if (!foundDip) { if (v < 0.3) foundDip = true; continue; }
+    if (v > bestV && c[lag] > c[lag - 1] && c[lag] >= c[lag + 1]) { bestV = v; best = lag; }
+    if (best > 0 && v < bestV * 0.6 && lag > best * 1.3) break;
+  }
+  if (best < 0 || bestV < 0.45) return null;
+  // 抛物线插值
+  const a = c[best - 1], b = c[best], d = c[best + 1];
+  const shift = (a - d) / (2 * (a - 2 * b + d) || 1);
+  return sr / (best + shift);
+}
+
+const Practice = {
+  running: false, frames: [], target: 'har', raf: null, lastT: 0, meter: null, onFrame: null, onDone: null,
+  tol: 0.5, // 半音容差（±50 音分）
+  start() {
+    this.frames = []; this.running = true; this.lastEval = -1;
+    const loop = () => {
+      if (!this.running) return;
+      this.evalFrame();
+      this.raf = requestAnimationFrame(loop);
+    };
+    loop();
+  },
+  stop() { this.running = false; if (this.raf) cancelAnimationFrame(this.raf); this.raf = null; },
+  evalFrame() {
+    if (!Player.playing) return;
+    const beat = Player.beatInCycle();
+    if (beat < 0) return; // 预备拍
+    const now = performance.now();
+    if (now - this.lastT < 45) return; this.lastT = now;
+    const detected = Mic.read();
+    const tgtArr = this.target === 'har' ? Player.har : Player.mel;
+    const otherArr = this.target === 'har' ? Player.mel : Player.har;
+    const tgt = harmonyAt(tgtArr, beat), other = harmonyAt(otherArr, beat);
+    let status, dispMidi = null, cents = null;
+    if (!tgt) { status = detected == null ? 'rest' : 'extra'; if (detected != null) dispMidi = detected - Player.transpose; }
+    else if (detected == null) { status = 'silent'; }
+    else {
+      const d = detected - Player.transpose;
+      const diffT = wrap12(d - tgt.midi); // -6..6
+      const diffO = other ? wrap12(d - other.midi) : 99;
+      cents = Math.round(diffT * 100);
+      if (Math.abs(diffT) <= this.tol) status = 'hit';
+      else if (other && Math.abs(diffO) <= this.tol && Math.abs(diffO) < Math.abs(diffT)) status = 'pulled';
+      else status = 'off';
+      dispMidi = tgt.midi + diffT;
+    }
+    const fr = { t: beat, status, midi: dispMidi, cents, bar: Math.floor(beat / Player.song.beats) + 1 };
+    this.frames.push(fr);
+    if (dispMidi != null) Roll.trail.push({ t: beat, midi: dispMidi, status });
+    if (this.onFrame) this.onFrame(fr, tgt);
+  },
+  summarize() {
+    const fr = this.frames.filter(f => f.status !== 'rest');
+    const withTarget = fr.filter(f => f.status !== 'extra');
+    const n = withTarget.length || 1;
+    const cnt = s => withTarget.filter(f => f.status === s).length;
+    const hit = cnt('hit'), pulled = cnt('pulled'), off = cnt('off'), silent = cnt('silent');
+    const extra = fr.filter(f => f.status === 'extra').length;
+    const bars = {};
+    for (const f of withTarget) { const b = bars[f.bar] || (bars[f.bar] = { n: 0, hit: 0 }); b.n++; if (f.status === 'hit') b.hit++; }
+    const barList = Object.entries(bars).map(([bar, v]) => ({ bar: +bar, pct: Math.round(100 * v.hit / v.n), n: v.n })).filter(b => b.n >= 4);
+    const worst = barList.slice().sort((a, b) => a.pct - b.pct).slice(0, 3).filter(b => b.pct < 70);
+    const score = Math.round(100 * hit / n);
+    return { total: withTarget.length, score, hitPct: score, pulledPct: Math.round(100 * pulled / n), offPct: Math.round(100 * off / n), silentPct: Math.round(100 * silent / n), extra, worst, barList };
+  },
+};
+function wrap12(x) { let d = ((x % 12) + 12) % 12; if (d > 6) d -= 12; return d; }
+
+/* 反馈建议（规则） */
+function makeAdvice(sum, ctx) {
+  const tips = [];
+  if (sum.total < 20) { tips.push('样本太少：至少完整唱一遍再看结果。确认麦克风已打开、戴着耳机。'); return tips; }
+  if (sum.silentPct >= 40) tips.push('该唱的地方大多没声音：先用“只有和声”听三遍，再用 wu 哼着跟；检查麦克风权限和耳机。');
+  if (sum.pulledPct >= 25) tips.push('被主旋律带走了（' + sum.pulledPct + '%）：开“右声道参考”，主旋律音量调到 30%，速度降 20% 再来；或先回到“持续音铺底”练守音。');
+  if (sum.offPct >= 25) tips.push('音不稳（' + sum.offPct + '% 跑调）：把参考音量调到 60% 跟唱几遍，再降回去；长音处要顶住，不要往下掉。');
+  if (sum.extra > 30) tips.push('该休息的地方也在唱（多唱 ' + sum.extra + ' 帧）：看卷帘上没有橙色块的地方就闭嘴，休止也是编排的一部分。');
+  if (ctx.sour && ctx.sour.length) tips.push('方案本身在第 ' + ctx.sour.join('、') + ' 小节酸：换另一个安全音，或那一小节停。');
+  if (sum.worst.length) tips.push('最弱的小节：第 ' + sum.worst.map(b => b.bar + '（' + b.pct + '%）').join('、') + '。单独循环这几小节。');
+  if (sum.score >= 85) {
+    const more = [];
+    if (ctx.refVol > 0) more.push('把参考音量再降一级（现在 ' + ctx.refVol + '%）');
+    if (ctx.rightOnly) more.push('关掉右声道参考，两只耳朵都听');
+    if (ctx.tempoPct < 100) more.push('速度恢复到原速');
+    if (ctx.melVol < 100) more.push('主旋律音量调到 100%');
+    tips.unshift('稳了（' + sum.score + '%）。' + (more.length ? '下一步：' + more[0] + '。' : '可以进入下一个技巧：' + (ctx.nextName || '') + '。'));
+  } else if (sum.score >= 70) tips.unshift('接近了（' + sum.score + '%）。保持同样的设置再来两遍，连续三遍都过 85% 再升级。');
+  else if (!tips.length) tips.unshift('还不稳（' + sum.score + '%）。先把参考音量调到 100%、主旋律调小，跟着唱到能背下来。');
+  return tips;
+}
+
+/* ---- app.js ---- */
+/* ===== 界面逻辑 ===== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const LS_KEY = 'hx_duet_harmony_v1';
+const state = {
+  songId: 'twinkle', transpose: 0, tempoPct: 100, techId: 'tail', cfgs: {}, tab: 'learn', cat: '甲',
+  prac: { refVol: 60, melVol: 100, accVol: 70, right: false, countIn: true, loop: false, swap: false },
+  scores: {}, plan: null, checks: {}, mode: 'both',
+};
+function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { } }
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (s) { Object.assign(state, s); state.prac = Object.assign({ refVol: 60, melVol: 100, accVol: 70, right: false, countIn: true, loop: false, swap: false }, s.prac || {}); } } catch (e) { }
+}
+let song = null, tech = null, melNotes = [], harNotes = [], summary = null, rafId = null;
+const techById = id => TECHNIQUES.find(t => t.id === id);
+function cfgOf(t) { return Object.assign({}, t.def, state.cfgs[t.id] || {}); }
+function setCfg(t, k, v) { state.cfgs[t.id] = Object.assign({}, state.cfgs[t.id] || {}, { [k]: v }); save(); }
+const VOWEL_TIMBRE = { words: 'words', wu: 'wu', ah: 'ah', mm: 'mm', dum: 'dum', doo: 'doo', la: 'la' };
+
+function rebuild() {
+  song = parseSong(SONGS.find(s => s.id === state.songId) || SONGS[0]);
+  tech = techById(state.techId) || TECHNIQUES[0];
+  if (tech.id === 'canon' && song.canonBars && !(state.cfgs.canon && state.cfgs.canon.delay)) state.cfgs.canon = Object.assign({}, state.cfgs.canon, { delay: String(song.canonBars) });
+  const cfg = cfgOf(tech);
+  melNotes = song.notes.map(n => ({ t: n.t, b: n.b, midi: n.midi, label: String(n.deg) }));
+  harNotes = generate(song, tech, cfg);
+  summary = sourSummary(song, harNotes);
+  Player.song = song; Player.mel = melNotes; Player.har = harNotes;
+  Player.bpm = song.bpm * state.tempoPct / 100; Player.transpose = state.transpose;
+  Player.timbre.har = VOWEL_TIMBRE[cfg.vowel] || 'wu';
+  Roll.setData(song, melNotes, harNotes); Roll.draw(Player.playing ? Player.beatInCycle() : 0);
+  renderHeader(); renderLearn(); renderPracticeHead();
+}
+function keyName() {
+  const pc = ((state.transpose % 12) + 12) % 12;
+  return song.mode === 'minor' ? PC_NAME[(9 + pc) % 12] + ' 小调' : PC_NAME[pc] + ' 大调';
+}
+function renderHeader() {
+  const sel = $('#songSel'); if (sel && sel.value !== state.songId) sel.value = state.songId;
+  $('#keyVal').textContent = keyName() + (state.transpose ? '（' + (state.transpose > 0 ? '+' : '') + state.transpose + '）' : '');
+  $('#tmpVal').textContent = state.tempoPct + '%（♩=' + Math.round(song.bpm * state.tempoPct / 100) + '）';
+  const s = safePcs(song);
+  $('#songInfo').textContent = song.sub + ' · ' + song.bars + ' 小节 · 安全音：' + s.an + '、' + s.bn;
+}
+/* ---------- 示例页 ---------- */
+function renderLearn() {
+  $$('#cats .chip').forEach(b => b.classList.toggle('on', b.dataset.cat === state.cat));
+  const ci = CAT_INFO[state.cat];
+  $('#catDesc').innerHTML = '<b>' + ci.name + '</b> · 核心能力：' + ci.core + '<br><span class="muted">' + ci.desc + '</span>';
+  const list = TECHNIQUES.filter(t => t.cat === state.cat);
+  $('#cards').innerHTML = list.map(t => {
+    const best = state.scores[song.id + '|' + t.id];
+    return `<button class="card ${t.id === tech.id ? 'on' : ''}" data-id="${t.id}"><div class="cname">${t.name}</div><div class="cshort">${t.short}</div>${best != null ? `<div class="cbest">最好 ${best}%</div>` : ''}</button>`;
+  }).join('');
+  $$('#cards .card').forEach(b => b.onclick = () => { state.techId = b.dataset.id; save(); stopAll(); rebuild(); });
+  renderDetail();
+}
+function switchesHTML(t, cfg, prefix) {
+  return t.switches.map(sw => `<div class="swrow"><span class="swlabel">${sw.label}</span><span class="swopts">${sw.opts.map(o => `<button class="sw ${String(cfg[sw.key]) === String(o[0]) ? 'on' : ''}" data-k="${sw.key}" data-v="${o[0]}">${o[1]}</button>`).join('')}</span></div>`).join('');
+}
+function bindSwitches(root) {
+  root.querySelectorAll('.sw').forEach(b => b.onclick = () => { setCfg(tech, b.dataset.k, b.dataset.v); const was = Player.playing; const beat = was ? Player.beatInCycle() : 0; rebuild(); if (was) startMode(state.mode, Math.max(0, beat)); });
+}
+function sourText() {
+  if (!harNotes.length) return '这首歌这里没有可用的位置（例如没有足够的空隙），换一首试试。';
+  if (!summary.sour.length && !summary.mild.length) return '这个方案全程都是和弦内音，放心唱。';
+  let s = '';
+  if (summary.sour.length) s += '<span class="tag sour">酸</span> 第 ' + summary.sour.join('、') + ' 小节：换另一个音或停。 ';
+  if (summary.mild.length) s += '<span class="tag mild">轻微</span> 第 ' + summary.mild.join('、') + ' 小节：有一点张力，一般可以接受。';
+  return s;
+}
+function parkRoll() { const cv = $('#rollCanvas'); const park = $('#rollPark'); if (cv && park && cv.parentElement !== park) park.appendChild(cv); }
+function renderDetail() {
+  parkRoll();
+  const cfg = cfgOf(tech);
+  const best = state.scores[song.id + '|' + tech.id];
+  $('#detail').innerHTML = `
+    <div class="dhead"><span class="cat">${tech.cat}</span><b>${tech.name}</b>${best != null ? `<span class="best">最好 ${best}%</span>` : ''}</div>
+    <p class="tip">${tech.tip}</p>
+    <div class="switches">${switchesHTML(tech, cfg)}</div>
+    <div class="playrow">
+      <button class="pbtn ${state.mode === 'mel' ? 'on' : ''}" data-mode="mel">只有旋律</button>
+      <button class="pbtn ${state.mode === 'both' ? 'on' : ''}" data-mode="both">旋律＋和声</button>
+      <button class="pbtn ${state.mode === 'har' ? 'on' : ''}" data-mode="har">只有和声</button>
+      <button class="pbtn stop" id="stopLearn">■ 停</button>
+    </div>
+    <div class="rollwrap" id="rollLearn"></div>
+    <div class="sour">${sourText()}</div>
+    <div class="steps"><b>做法</b><ol>${tech.steps.map(s => '<li>' + s + '</li>').join('')}</ol></div>
+    <div class="legend"><span class="lg mel"></span>主旋律 <span class="lg har"></span>和声 <span class="lg sour"></span>酸 <span class="lg mild"></span>轻微 · 数字是简谱音级</div>
+    <div class="gorow"><button class="big" id="goPractice">去练习这个 →</button></div>`;
+  bindSwitches($('#detail'));
+  $$('#detail .pbtn[data-mode]').forEach(b => b.onclick = () => { state.mode = b.dataset.mode; save(); startMode(state.mode, 0); renderPlayBtns(); });
+  $('#stopLearn').onclick = () => stopAll();
+  $('#goPractice').onclick = () => { setTab('practice'); };
+  mountRoll('#rollLearn');
+}
+function renderPlayBtns() { $$('.pbtn[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === state.mode && Player.playing)); }
+function startMode(mode, from) {
+  AudioEng.ensure();
+  Player.flags.mel = mode !== 'har'; Player.flags.har = mode !== 'mel';
+  Player.flags.pad = true; Player.flags.bass = true; Player.flags.countIn = false; Player.loop = true;
+  AudioEng.setVol('mel', 0.8); AudioEng.setVol('har', 0.8); AudioEng.setVol('pad', 0.8 * state.prac.accVol / 100); AudioEng.setVol('bass', 0.8 * state.prac.accVol / 100); AudioEng.setPan(false);
+  Player.timbre.har = VOWEL_TIMBRE[cfgOf(tech).vowel] || 'wu';
+  Player.onLoop = () => { Roll.trail = []; };
+  Player.onStop = () => { renderPlayBtns(); };
+  Player.start(from || 0);
+  renderPlayBtns();
+  animate();
+}
+function stopAll() {
+  if (Practice.running) endPractice();
+  Player.stop(true); Roll.draw(0); renderPlayBtns();
+  $('#pracStart').textContent = '开始练习';
+}
+function animate() {
+  if (rafId) cancelAnimationFrame(rafId);
+  const loop = () => {
+    if (!Player.playing) { Roll.draw(Player.offset || 0); return; }
+    const b = Player.beatInCycle();
+    if (b < 0) Roll.draw(0, { countIn: Math.ceil(-b) }); else Roll.draw(b);
+    rafId = requestAnimationFrame(loop);
+  };
+  loop();
+}
+function mountRoll(sel) {
+  const wrap = $(sel); if (!wrap) return;
+  const cv = $('#rollCanvas'); if (!cv) return;
+  if (cv.parentElement !== wrap) wrap.appendChild(cv);
+  Roll.resize();
+}
+/* ---------- 练习页 ---------- */
+function renderPracticeHead() {
+  const sel = $('#pracTech');
+  if (!sel.options.length) {
+    for (const cat of ['甲', '乙', '丙', '丁']) {
+      const og = document.createElement('optgroup'); og.label = CAT_INFO[cat].name;
+      TECHNIQUES.filter(t => t.cat === cat).forEach(t => { const o = document.createElement('option'); o.value = t.id; o.textContent = t.name; og.appendChild(o); });
+      sel.appendChild(og);
+    }
+    sel.onchange = () => { state.techId = sel.value; save(); stopAll(); rebuild(); };
+  }
+  sel.value = tech.id;
+  $('#pracTip').textContent = tech.tip;
+  $('#pracSwitches').innerHTML = switchesHTML(tech, cfgOf(tech));
+  bindSwitches($('#pracSwitches'));
+  $('#pracSour').innerHTML = sourText();
+  const p = state.prac;
+  $('#refVol').value = p.refVol; $('#refVolV').textContent = p.refVol + '%';
+  $('#melVol').value = p.melVol; $('#melVolV').textContent = p.melVol + '%';
+  $('#accVol').value = p.accVol; $('#accVolV').textContent = p.accVol + '%';
+  $('#optRight').checked = p.right; $('#optCount').checked = p.countIn; $('#optLoop').checked = p.loop; $('#optSwap').checked = p.swap;
+  $('#optRight').disabled = p.swap;
+  const best = state.scores[song.id + '|' + tech.id];
+  $('#pracBest').textContent = best != null ? '最好成绩 ' + best + '%' : '还没有成绩';
+  if (state.tab === 'practice') mountRoll('#rollPrac');
+}
+function bindPractice() {
+  const p = state.prac;
+  const slider = (id, key, apply) => { $('#' + id).oninput = e => { p[key] = +e.target.value; $('#' + id + 'V').textContent = p[key] + '%'; save(); if (apply) apply(); }; };
+  slider('refVol', 'refVol', applyVols); slider('melVol', 'melVol', applyVols); slider('accVol', 'accVol', applyVols);
+  $('#optRight').onchange = e => { p.right = e.target.checked; save(); if (AudioEng.ctx) AudioEng.setPan(p.right && !p.swap); };
+  $('#optCount').onchange = e => { p.countIn = e.target.checked; save(); };
+  $('#optLoop').onchange = e => { p.loop = e.target.checked; save(); Player.loop = p.loop; };
+  $('#optSwap').onchange = e => { p.swap = e.target.checked; $('#optRight').disabled = p.swap; save(); applyVols(); };
+  $('#micBtn').onclick = async () => { if (Mic.on) { Mic.stop(); } else { await Mic.start(); } renderMicBtn(); };
+  $('#pracStart').onclick = async () => { if (Practice.running) { endPractice(); } else { await startPractice(); } };
+  $('#pracStop').onclick = () => { stopAll(); };
+}
+function renderMicBtn() { $('#micBtn').textContent = Mic.on ? '麦克风：开' : '麦克风：关'; $('#micBtn').classList.toggle('on', Mic.on); }
+function applyVols() {
+  if (!AudioEng.ctx) return;
+  const p = state.prac;
+  const tgtVol = 0.8 * p.refVol / 100, othVol = 0.8 * p.melVol / 100;
+  if (p.swap) { AudioEng.setVol('mel', tgtVol); AudioEng.setVol('har', othVol); AudioEng.setPan(false); }
+  else { AudioEng.setVol('har', tgtVol); AudioEng.setVol('mel', othVol); AudioEng.setPan(p.right); }
+  AudioEng.setVol('pad', 0.8 * p.accVol / 100); AudioEng.setVol('bass', 0.8 * p.accVol / 100);
+}
+async function startPractice() {
+  AudioEng.ensure();
+  if (!Mic.on) { const ok = await Mic.start(); renderMicBtn(); if (!ok) return; }
+  const p = state.prac;
+  Player.stop(true);
+  Player.flags.mel = true; Player.flags.har = true; Player.flags.pad = true; Player.flags.bass = true; Player.flags.countIn = p.countIn; Player.loop = p.loop;
+  Player.timbre.har = VOWEL_TIMBRE[cfgOf(tech).vowel] || 'wu';
+  applyVols();
+  Practice.target = p.swap ? 'mel' : 'har';
+  Roll.trail = [];
+  $('#result').classList.add('hidden');
+  Practice.onFrame = (fr, tgt) => liveMeter(fr, tgt);
+  Player.onLoop = () => { Roll.trail = []; };
+  Player.onEnd = () => { endPractice(); };
+  Player.onStop = () => { };
+  Player.start(0);
+  Practice.start();
+  $('#pracStart').textContent = '■ 结束并看结果';
+  $('#liveStatus').textContent = '准备…';
+  animate();
+}
+function liveMeter(fr, tgt) {
+  const el = $('#liveStatus'), bar = $('#centsBar');
+  const names = { hit: '命中', pulled: '被带跑', off: '跑调', silent: '没声音', rest: '休息', extra: '多唱' };
+  el.textContent = names[fr.status] + (tgt ? ' · 目标 ' + (tgt.label || midiLabel(tgt.midi)) : '');
+  el.className = 'live ' + fr.status;
+  if (fr.cents != null) { bar.style.left = (50 + Math.max(-50, Math.min(50, fr.cents)) / 1.2) + '%'; bar.style.opacity = 1; } else bar.style.opacity = 0.2;
+}
+function endPractice() {
+  if (!Practice.running) return;
+  Practice.stop();
+  Player.stop(true);
+  const sum = Practice.summarize();
+  const key = song.id + '|' + tech.id;
+  if (sum.total >= 20 && (state.scores[key] == null || sum.score > state.scores[key])) { state.scores[key] = sum.score; save(); }
+  const ctx = { sour: summary.sour, refVol: state.prac.refVol, rightOnly: state.prac.right, tempoPct: state.tempoPct, melVol: state.prac.melVol, nextName: (techById(tech.next) || {}).name };
+  const tips = makeAdvice(sum, ctx);
+  const r = $('#result'); r.classList.remove('hidden');
+  const grade = sum.total < 20 ? '—' : (sum.score >= 85 ? '稳' : (sum.score >= 70 ? '接近' : '继续'));
+  r.innerHTML = `<div class="rhead"><span class="score">${sum.total < 20 ? '—' : sum.score + '%'}</span><span class="grade g-${grade}">${grade}</span><span class="muted">${tech.name} · ${song.name}</span></div>
+    <div class="bars"><span class="b hit" style="width:${sum.hitPct}%"></span><span class="b pulled" style="width:${sum.pulledPct}%"></span><span class="b off" style="width:${sum.offPct}%"></span><span class="b silent" style="width:${sum.silentPct}%"></span></div>
+    <div class="rstats">命中 ${sum.hitPct}% · 被带跑 ${sum.pulledPct}% · 跑调 ${sum.offPct}% · 没声音 ${sum.silentPct}%${sum.extra ? ' · 多唱 ' + sum.extra : ''}</div>
+    <ul class="advice">${tips.map(t => '<li>' + t + '</li>').join('')}</ul>
+    <div class="gorow"><button class="big" id="againBtn">再来一遍</button></div>`;
+  $('#pracStart').textContent = '开始练习';
+  $('#liveStatus').textContent = '已结束'; $('#liveStatus').className = 'live';
+  renderPracticeHead(); renderLearn();
+  Roll.draw(0);
+}
+/* ---------- 演唱单 ---------- */
+const PLAN_DEFAULT = [
+  ['前奏', 'rest', '想加花就用 wu 哼前奏旋律'], ['主歌 A', 'rest', '让人先听清旋律'], ['主歌 B', 'drone', '持续 sol，wu'],
+  ['预副歌', 'echo', '句尾空隙回两三个字'], ['副歌 1', 'octave', '八度齐唱'], ['间奏', 'rest', ''],
+  ['主歌（第二遍）', 'twodrone', '持续 do，酸处换 sol'], ['副歌 2', 'tailnote', '只在最后一句句尾换音'], ['桥段', 'answer', '应答句或回声'],
+  ['副歌 3', 'root', '跟贝斯唱根音；或八度'], ['尾声', 'ending', '旋律落 do，你留 sol'],
+];
+function planRows() { return state.plan || (state.plan = { song: '', rows: PLAN_DEFAULT.map(r => ({ sec: r[0], tech: r[1], note: r[2] })) }); }
+function renderPlan() {
+  const plan = planRows();
+  $('#planSong').value = plan.song || '';
+  const opts = '<option value="rest">休息</option>' + ['甲', '乙', '丙', '丁'].map(cat => `<optgroup label="${CAT_INFO[cat].name}">` + TECHNIQUES.filter(t => t.cat === cat).map(t => `<option value="${t.id}">${t.name}</option>`).join('') + '</optgroup>').join('');
+  $('#planRows').innerHTML = plan.rows.map((r, i) => `<div class="prow"><input class="psec" data-i="${i}" value="${r.sec.replace(/"/g, '&quot;')}" placeholder="段落"><select class="ptech" data-i="${i}">${opts}</select><input class="pnote" data-i="${i}" value="${(r.note || '').replace(/"/g, '&quot;')}" placeholder="开关/备注"><button class="pdel" data-i="${i}">×</button></div>`).join('');
+  $$('#planRows .ptech').forEach(s => { s.value = plan.rows[+s.dataset.i].tech; s.onchange = () => { plan.rows[+s.dataset.i].tech = s.value; save(); }; });
+  $$('#planRows .psec').forEach(e => e.oninput = () => { plan.rows[+e.dataset.i].sec = e.value; save(); });
+  $$('#planRows .pnote').forEach(e => e.oninput = () => { plan.rows[+e.dataset.i].note = e.value; save(); });
+  $$('#planRows .pdel').forEach(b => b.onclick = () => { plan.rows.splice(+b.dataset.i, 1); save(); renderPlan(); });
+}
+function planText() {
+  const plan = planRows();
+  const name = id => id === 'rest' ? '休息' : (techById(id) || {}).name || id;
+  const cat = id => id === 'rest' ? '—' : (techById(id) || {}).cat || '';
+  return `演唱单：${plan.song || '（歌名）'}\n` + plan.rows.map(r => `${r.sec}：${name(r.tech)}（${cat(r.tech)}）${r.note ? ' — ' + r.note : ''}`).join('\n') + '\n原则：主歌轻、副歌满；每段只用一种手法；结尾一定做和弦。';
+}
+function bindPlan() {
+  $('#planSong').oninput = e => { planRows().song = e.target.value; save(); };
+  $('#planAdd').onclick = () => { planRows().rows.push({ sec: '', tech: 'rest', note: '' }); save(); renderPlan(); };
+  $('#planReset').onclick = () => { state.plan = null; planRows(); save(); renderPlan(); };
+  $('#planExport').onclick = () => { const t = planText(); $('#planOut').value = t; $('#planOut').classList.remove('hidden'); if (navigator.clipboard) navigator.clipboard.writeText(t).then(() => { $('#planExport').textContent = '已复制'; setTimeout(() => $('#planExport').textContent = '生成文字并复制', 1500); }).catch(() => { }); };
+}
+/* ---------- 说明页 ---------- */
+const CHECKS = ['甲：句尾两字跟入，三遍进入收音一致', '甲：同位置改八度，直接唱到准确八度', '甲：空隙里回声两个音，不挤下一句', '甲：接尾多留一拍，不滑音', '乙：对 drone 守 sol 30 秒不掉；旋律很小声时不被带走', '乙：旋律正常音量守 sol，能说出酸的小节', '乙：双持续音换点三遍一致', '乙：结尾和弦三次有两次对', '丙：背一句现成和声到参考静音', '丁：副歌三个句尾定稿，每处可复现', '综合：给 20 秒副歌编三处，叠录在原唱上', '综合：录 A1/B/A2 并删减，定演唱单'];
+function renderGuide() {
+  $('#checks').innerHTML = CHECKS.map((c, i) => `<label class="chk"><input type="checkbox" data-i="${i}" ${state.checks[i] ? 'checked' : ''}><span>第 ${i + 1} 次 · ${c}</span></label>`).join('');
+  $$('#checks input').forEach(b => b.onchange = () => { state.checks[b.dataset.i] = b.checked; save(); });
+}
+/* ---------- 标签与全局控制 ---------- */
+function setTab(t) {
+  state.tab = t; save();
+  $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  $$('main > section').forEach(s => s.classList.toggle('hidden', s.id !== 'tab-' + t));
+  if (t === 'learn') { stopPracticeOnly(); mountRoll('#rollLearn'); }
+  if (t === 'practice') { Player.stop(true); renderPlayBtns(); renderPracticeHead(); mountRoll('#rollPrac'); }
+  if (t === 'plan') renderPlan();
+  if (t === 'guide') renderGuide();
+}
+function stopPracticeOnly() { if (Practice.running) endPractice(); }
+function bindGlobal() {
+  const sel = $('#songSel');
+  SONGS.forEach(s => { const o = document.createElement('option'); o.value = s.id; o.textContent = s.name; sel.appendChild(o); });
+  sel.value = state.songId;
+  sel.onchange = () => { state.songId = sel.value; save(); stopAll(); rebuild(); };
+  $('#keyMinus').onclick = () => { state.transpose = Math.max(-7, state.transpose - 1); save(); rebuild(); };
+  $('#keyPlus').onclick = () => { state.transpose = Math.min(7, state.transpose + 1); save(); rebuild(); };
+  $('#tmpMinus').onclick = () => { state.tempoPct = Math.max(50, state.tempoPct - 10); save(); rebuild(); };
+  $('#tmpPlus').onclick = () => { state.tempoPct = Math.min(140, state.tempoPct + 10); save(); rebuild(); };
+  $$('.tabs button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+  $$('#cats .chip').forEach(b => b.onclick = () => { state.cat = b.dataset.cat; const first = TECHNIQUES.find(t => t.cat === state.cat); if (tech.cat !== state.cat) state.techId = first.id; save(); stopAll(); rebuild(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopAll(); });
+}
+window.addEventListener('DOMContentLoaded', () => {
+  load();
+  Roll.init($('#rollCanvas'));
+  bindGlobal(); bindPractice(); bindPlan();
+  rebuild();
+  setTab(state.tab || 'learn');
+  renderMicBtn();
+  // iOS 需要用户手势解锁音频
+  const unlock = () => { AudioEng.ensure(); document.removeEventListener('touchend', unlock); document.removeEventListener('click', unlock); };
+  document.addEventListener('touchend', unlock); document.addEventListener('click', unlock);
+});
+
+</script>
+</body>
+</html>
